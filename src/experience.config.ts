@@ -29,22 +29,22 @@ export const experienceConfig = {
   /* Camera — geometry-aware composition                                */
   /* ------------------------------------------------------------------ */
   camera: {
-    /** world-units the camera keeps visible around the door */
-    fitHalfW: 2.7,
-    fitHalfV: 3.5, // ≈ door height / 0.6 → door fills ~60% of viewport height
+    /* architectural anchors (world units, floor = y 0, doorway plane = z 0) */
+    doorHeight: 4.3,
+    doorWidth: 3.5,
+    eyeHeight: 1.55,
+    lookY: 2.0, // slightly below door centre → threshold reads, no floor-tilt
+    /** world-units kept visible around the door (drives responsive distance) */
+    fitHalfV: 3.5, // → door ≈ 60% of viewport height
+    fitHalfW: 2.7, // portrait-width guard
     fov: 42,
-    /** standing eye height in front of the door */
-    eyeHeight: 1.5,
-    /** where the eye rests on the door (slightly above mid-leaf) */
-    lookY: 2.05,
-    /** scripted poses, derived from the door/threshold/interior anchors */
+    /** scripted poses, derived from the anchors above */
     poses: {
-      front: { z: 0, y: 1.5, lookY: 2.05, fov: 42 },        // z from fit-math
-      opening: { z: 7.1, y: 1.5, lookY: 1.95, fov: 45 },     // tiny push, no dive
-      doorOpen: { z: 6.2, y: 1.5, lookY: 1.95, fov: 46 },
-      lift: { y: 1.62 },
-      threshold: { z: 0.4, y: 1.62, lookZ: -4.6, lookY: 1.95 },
-      interior: { z: -5.2, y: 1.68, lookZ: -9.5, lookY: 1.92, fov: 51 },
+      front: { z: 9.2, y: 1.55, lookY: 2.0, fov: 42 },      // z recomputed from fit-math
+      opening: { z: 7.1, y: 1.55, lookY: 1.95, fov: 45 },   // tiny push, eye height held
+      doorOpen: { z: 6.4, y: 1.58, lookY: 1.95, fov: 46 },
+      threshold: { z: 6.0, y: 1.66, lookZ: -4.8, lookY: 1.92 }, // LIFT + LOOK
+      interior: { z: -5.0, y: 1.7, lookZ: -9.5, lookY: 1.92, fov: 51 },
     },
   },
 
@@ -71,7 +71,7 @@ export const experienceConfig = {
     enabled: true,
     /** barely-there enhancement; quality comes from geometry, light & shadow */
     bloom: { intensity: 0.2, luminanceThreshold: 2.0, luminanceSmoothing: 0.15, radius: 0.6 },
-    dof: { focusDistance: 0.2, focalLength: 0.055, bokehScale: 1.2 },
+    dof: { focusDistance: 0.225, focalLength: 0.055, bokehScale: 1.0 },
     chromaticAberration: 0.00006,
     noise: 0.006,
     vignette: 0.42,

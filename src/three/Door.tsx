@@ -117,8 +117,9 @@ function DoorLeaf({ side }: { side: "left" | "right" }) {
     { h: 0.92, y: 3.42 },
   ];
 
+  // hinge at local origin; leaf children span y from 0 (floor) to H (top)
   return (
-    <group position={[side === "left" ? w / 2 : -w / 2, H / 2, 0]}>
+    <group position={[side === "left" ? w / 2 : -w / 2, 0, 0]}>
       {/* back slab — gives the leaf structural depth so panels read as recessed */}
       <mesh position={[0, 0, -TH * 0.26]}>
         <boxGeometry args={[w, H, 0.03]} />

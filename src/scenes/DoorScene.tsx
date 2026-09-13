@@ -66,10 +66,11 @@ export function DoorScene() {
     if (stage === "open_available") director.lightHandle();
     if (stage === "door_open") {
       director.setCameraMode("door_open");
+      // deliberate pause: the open room is read before STEP INSIDE is offered
       const t = setTimeout(() => {
         director.liftDoorToInterior();
         setStage("step_inside_available");
-      }, 1100);
+      }, 1600);
       return () => clearTimeout(t);
     }
   }, [stage]);

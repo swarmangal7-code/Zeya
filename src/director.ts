@@ -222,13 +222,13 @@ class Director {
     // interior at first stays almost black, then cool light gives way
     if (this.interiorGlow) {
       tl.fromTo(this.interiorGlow.material,
-        { opacity: 0.16 },
-        { opacity: 0.55, duration: total * 0.5, ease: "power2.out" },
-        0.9,
+        { opacity: 0.14 },
+        { opacity: 0.55, duration: 1.9, ease: "power2.out" },
+        1.6,
       );
     }
     if (this.interiorLight) {
-      tl.fromTo(this.interiorLight, { intensity: 0 }, { intensity: 26, duration: total * 0.5, ease: "power2.out" }, 1.1);
+      tl.fromTo(this.interiorLight, { intensity: 0 }, { intensity: 26, duration: 2.0, ease: "power2.out" }, 1.7);
     }
 
     // camera: stays at eye level, only a shallow forward push into doorway view
@@ -291,29 +291,31 @@ class Director {
       return;
     }
 
-    // ENTER 1 — lift, only
-    tl.to(this.camTarget, { y: thr.y, z: 0.6, duration: 0.9, ease: "power2.inOut" }, 0)
-      // ENTER 2 — look forward through the doorway
-      .to(this.camLook, { y: thr.lookY, z: thr.lookZ, duration: 0.95, ease: "power2.inOut" }, 0.2)
-      .to(this, { fovTarget: 47, duration: 1.1, ease: "power2.inOut" }, 0.25)
-      // ENTER 3 — forward, crossing the threshold
-      .to(this.camTarget, { y: int.y, z: int.z, duration: 1.35, ease: "power2.inOut" }, 0.75)
-      .to(this.camLook, { y: int.lookY, z: int.lookZ, duration: 1.35, ease: "power2.inOut" }, 0.75)
+    // ENTER — strict phases: LIFT → LOOK → FORWARD → CROSS → SETTLE
+    // 1 — lift only, eye height, no forward travel yet
+    tl.to(this.camTarget, { y: thr.y, duration: 0.85, ease: "power2.inOut" }, 0)
+      // 2 — look forward into the interior, body held
+      .to(this.camLook, { y: thr.lookY, z: thr.lookZ, duration: 1.0, ease: "power2.inOut" }, 0.25)
+      .to(this, { fovTarget: 48, duration: 1.2, ease: "power2.inOut" }, 0.35)
+      // 3 — forward walk through the doorway
+      .to(this.camTarget, { z: int.z, duration: 1.55, ease: "power2.inOut" }, 0.85)
+      .to(this.camTarget, { y: int.y, duration: 1.55, ease: "power2.inOut" }, 0.85)
+      .to(this.camLook, { y: int.lookY, z: int.lookZ, duration: 1.45, ease: "power2.inOut" }, 0.9)
       .to(this, { dofFocus: 0.32, dofBokeh: 1.5, duration: 1.4, ease: "power2.inOut" }, 0.9)
       .to(this, { fovTarget: int.fov, duration: 1.1, ease: "power2.inOut" }, 1.15);
 
-    // blue interior spill shifts toward cool white as we cross
-    tl.call(() => this.tintInteriorLight(0.7), undefined, 0.55);
-    tl.call(() => this.tintInteriorLight(1), undefined, 1.25);
+    // blue interior spill shifts toward cool white as we cross (z crosses ~0 at t≈1.35)
+    tl.call(() => this.tintInteriorLight(0.65), undefined, 1.05);
+    tl.call(() => this.tintInteriorLight(1), undefined, 1.6);
 
     // room key yields to the interior
-    if (this.keyLight) tl.to(this.keyLight, { intensity: 0.4, duration: 1.2 }, 0.6);
+    if (this.keyLight) tl.to(this.keyLight, { intensity: 0.4, duration: 1.4 }, 0.95);
 
     tl.call(() => {
       this.setCameraMode("interior");
       onEntered?.();
-    }, undefined, 0.85);
-    tl.call(() => onSettled?.(), undefined, 2.0);
+    }, undefined, 1.4);
+    tl.call(() => onSettled?.(), undefined, 2.15);
   }
 
   /** Progression of the interior light toward cool white (0..1). */
