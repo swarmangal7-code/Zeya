@@ -1,9 +1,12 @@
 import { lazy, Suspense, useEffect } from "react";
 import { useExperience } from "./state/useExperience";
+import { experienceConfig } from "./experience.config";
 import { audio } from "./audio/AudioManager";
 import { FilmGrain } from "./components/FilmGrain";
 import { Cursor } from "./components/Cursor";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { CinematicGradient } from "./components/CinematicGradient";
+import type { GradientVariantKey } from "./experience.config";
 import { LoadingScene } from "./scenes/LoadingScene";
 import { LockScreenScene } from "./scenes/LockScreenScene";
 import { RevealScene } from "./scenes/RevealScene";
@@ -15,6 +18,13 @@ const DoorScene = lazy(() =>
 const ScrollScene = lazy(() =>
   import("./scenes/ScrollScene").then((m) => ({ default: m.ScrollScene })),
 );
+
+const gradientVariant = (stage: ReturnType<typeof useExperience.getState>["stage"]): GradientVariantKey => {
+  if (stage === "revealing" || stage === "revealed") return "reveal";
+  if (stage === "scroll") return "scroll";
+  if (stage === "loading" || stage === "locked" || stage === "unlocking") return "lock";
+  return "door";
+};
 
 export default function App() {
   const stage = useExperience((s) => s.stage);
@@ -31,6 +41,7 @@ export default function App() {
 
   useEffect(() => {
     if (stage === "unlocking") audio.startAmbient();
+    if (stage === "revealing") audio.revealSwell();
   }, [stage]);
 
   // allow body scroll only in the final chapter
@@ -48,6 +59,7 @@ export default function App() {
 
   return (
     <div className={`experience ${isScroll ? "scrolling" : ""}`} data-stage={stage}>
+      {experienceConfig.gradient.enabled && <CinematicGradient variant={gradientVariant(stage)} />}
       <FilmGrain />
       <div className="vignette" aria-hidden />
 

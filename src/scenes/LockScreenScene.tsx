@@ -3,14 +3,14 @@ import gsap from "gsap";
 import { useExperience } from "../state/useExperience";
 import { experienceConfig } from "../experience.config";
 import { audio } from "../audio/AudioManager";
-import { quality, prefersReducedMotion } from "../lib/quality";
-import { Atmosphere } from "../components/Atmosphere";
+import { prefersReducedMotion } from "../lib/quality";
 
 const DIGITS = 4;
 
 /**
- * Cinema lockscreen. A live clock, a quiet room, and a four-digit PIN
- * gate with an operating-system-style unlock sequence.
+ * The private entry — a quiet, cool lockscreen. Live clock, serene
+ * negative space, and a four-digit code gate with an operating-system
+ * style unlock. No decoration; the atmosphere is the medium.
  */
 export function LockScreenScene() {
   const setStage = useExperience((s) => s.setStage);
@@ -19,8 +19,9 @@ export function LockScreenScene() {
   const root = useRef<HTMLDivElement>(null);
   const light = useRef<HTMLDivElement>(null);
   const err = useRef<HTMLDivElement>(null);
-  const hint = useRef<HTMLDivElement>(null);
+  const content = useRef<HTMLDivElement>(null);
   const pinBox = useRef<HTMLDivElement>(null);
+  const clock = useRef<HTMLDivElement>(null);
 
   const [vals, setVals] = useState<string[]>(Array(DIGITS).fill(""));
   const [now, setNow] = useState(() => new Date());
@@ -28,7 +29,8 @@ export function LockScreenScene() {
   const busy = useRef(false);
 
   const pin = experienceConfig.pin;
-  const { hint: hintText } = experienceConfig.text.lock;
+  const { hint, greeting } = experienceConfig.text.lock;
+  const reduce = prefersReducedMotion;
 
   // live clock
   useEffect(() => {
@@ -36,16 +38,18 @@ export function LockScreenScene() {
     return () => clearInterval(id);
   }, []);
 
-  // settle in + focus first digit
+  // settle in — slow resolve, then attention drops to the code
   useEffect(() => {
-    const tl = gsap.timeline({ delay: 0.4 });
-    tl.fromTo(".lock-screen__content", { opacity: 0, y: 18, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.4, ease: "power3.out" });
-    tl.call(() => inputs.current[0]?.focus(), undefined, 1.2);
+    const settle = experienceConfig.timings.lock.settleIn;
+    const tl = gsap.timeline({ delay: settle });
+    tl.fromTo(content.current, { opacity: 0, y: 16, filter: "blur(7px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: reduce ? 0.8 : 1.6, ease: "power3.out" });
+    tl.fromTo(".lock-screen__hint", { opacity: 0 }, { opacity: 0.8, duration: 1.0, ease: "power2.out" }, reduce ? 0.6 : 1.6);
+    tl.call(() => inputs.current[0]?.focus(), undefined, reduce ? 0.4 : 1.9);
     return () => {
       tl.kill();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [reduce]);
 
   const commit = useCallback(() => {
     const entered = vals.join("");
@@ -60,7 +64,10 @@ export function LockScreenScene() {
     audio.error();
     const box = pinBox.current;
     if (box) {
-      gsap.fromTo(box, { x: 0 }, { keyframes: [{ x: -10, duration: 0.06 }, { x: 9, duration: 0.06 }, { x: -6, duration: 0.06 }, { x: 4, duration: 0.06 }, { x: 0, duration: 0.07 }], onComplete: () => (busy.current = false) });
+      gsap.fromTo(box, { x: 0 }, {
+        keyframes: [{ x: -9, duration: 0.06 }, { x: 8, duration: 0.06 }, { x: -5, duration: 0.06 }, { x: 4, duration: 0.06 }, { x: 0, duration: 0.07 }],
+        onComplete: () => { busy.current = false; },
+      });
     }
     if (err.current) {
       gsap.fromTo(err.current, { opacity: 0 }, { opacity: 1, duration: 0.5, yoyo: true, repeat: 1, ease: "power2.out" });
@@ -74,30 +81,26 @@ export function LockScreenScene() {
     audio.chime();
     setStage("unlocking");
 
-    const reduce = prefersReducedMotion;
     const tl = gsap.timeline();
-    // 1. digits illuminate
+    // digits briefly illuminate
     tl.to(".lock-screen__input", {
-      borderColor: "rgba(201,163,95,0.9)",
-      backgroundColor: "rgba(201,163,95,0.12)",
-      color: "#f2e6cf",
-      boxShadow: "0 0 26px rgba(201,163,95,0.35)",
-      duration: 0.7,
-      stagger: 0.06,
+      borderColor: "rgba(109,141,255,0.9)",
+      color: "#F4F7FF",
+      textShadow: "0 0 18px rgba(109,141,255,0.5)",
+      duration: 0.6,
+      stagger: 0.07,
       ease: "power2.out",
     }, 0);
-    // 2. the room brightens
+    // cool light washes through
     tl.to(light.current, { opacity: 1, duration: 1.6, ease: "power2.inOut" }, 0.1);
-    // 3. hint dissolves
-    tl.to(hint.current, { opacity: 0, y: -10, filter: "blur(6px)", duration: 0.7, ease: "power2.in" }, 0.6);
+    tl.to(".lock-screen__hint", { opacity: 0, y: -8, filter: "blur(5px)", duration: 0.6, ease: "power2.in" }, 0.55);
     if (!reduce) {
-      // 4. zoom inward
-      tl.to(".lock-screen__content", { scale: 1.045, y: -14, duration: 2.0, ease: "power2.inOut" }, 0.3);
+      tl.to(content.current, { scale: 1.035, y: -12, duration: 2.0, ease: "power2.inOut" }, 0.3);
     }
-    tl.to(".lock-screen__clock", { opacity: 0, duration: 0.7, ease: "power2.in" }, 0.9);
-    // 5. the whole lock screen melts into the world
+    tl.to(clock.current, { opacity: 0, duration: 0.7, ease: "power2.in" }, 0.85);
+    // the room expands — hand off to the door world
     tl.call(() => setStage("door_idle"), undefined, reduce ? 0.7 : 1.5);
-    tl.to(root.current, { opacity: 0, duration: reduce ? 0.5 : 1.0, ease: "power2.inOut" }, "<");
+    tl.to(root.current, { opacity: 0, duration: reduce ? 0.5 : 1.1, ease: "power2.inOut" }, "<");
   };
 
   const setDigit = (i: number, text: string) => {
@@ -107,6 +110,10 @@ export function LockScreenScene() {
       next[i] = digits;
       return next;
     });
+    const el = inputs.current[i];
+    if (el && digits) {
+      gsap.fromTo(el, { scale: 0.9, opacity: 0.6, filter: "blur(3px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.26, ease: "power3.out" });
+    }
     if (digits && i < DIGITS - 1) inputs.current[i + 1]?.focus();
     return digits;
   };
@@ -150,7 +157,6 @@ export function LockScreenScene() {
     }
   };
 
-  // auto-submit once full
   useEffect(() => {
     if (vals.every((v) => v !== "") && stage === "locked") commit();
   }, [vals, stage, commit]);
@@ -160,18 +166,20 @@ export function LockScreenScene() {
 
   return (
     <div className="screen lock-screen" ref={root}>
-      <div className="lock-screen__room" />
+      <div className="lock-screen__scrim" />
       <div className="lock-screen__light" ref={light} />
       <div className="lock-screen__err" ref={err} />
-      <Atmosphere count={Math.round(90 * quality.maxParticleRatio)} color="rgba(255,220,180,0.4)" speed={0.16} />
-      <div className="lock-screen__content" ref={hint}>
-        <div className="lock-screen__clock">
+
+      <div className="lock-screen__content" ref={content}>
+        <div className="lock-screen__clock" ref={clock}>
           <span className="lock-screen__time">{time}</span>
           <span className="lock-screen__date">{date}</span>
+          {greeting && <span className="lock-screen__greeting">{greeting}</span>}
         </div>
+
         <div className="lock-screen__pin" ref={pinBox} data-cursor="pin">
-          <p className="lock-screen__hint">{hintText}</p>
-          <div className="lock-screen__inputs" role="group" aria-label="Four digit PIN">
+          <p className="lock-screen__hint">{hint}</p>
+          <div className="lock-screen__inputs" role="group" aria-label="Four digit code">
             {Array.from({ length: DIGITS }).map((_, i) => (
               <input
                 key={i}
@@ -184,7 +192,7 @@ export function LockScreenScene() {
                 autoComplete="one-time-code"
                 maxLength={1}
                 value={vals[i]}
-                aria-label={`Digit ${i + 1} of the door PIN`}
+                aria-label={`Digit ${i + 1} of the door code`}
                 onChange={(e) => setDigit(i, e.target.value)}
                 onKeyDown={(e) => onKeyDown(i, e)}
                 onPaste={onPaste}
@@ -193,7 +201,6 @@ export function LockScreenScene() {
           </div>
         </div>
       </div>
-      <p className="lock-screen__foot" aria-hidden>&#8727;</p>
     </div>
   );
 }

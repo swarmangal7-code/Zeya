@@ -57,7 +57,7 @@ export function makeWoodTexture(base: string, streak: string, accent: string): T
 }
 
 /** Soft radial gradient used for fake volumetric light / glow sprites. */
-export function makeGlowTexture(inner = "#ffe9c4", outer = "#ffd9a8"): THREE.CanvasTexture {
+export function makeGlowTexture(inner = "#DCE6FF", outer = "#8FA8E0"): THREE.CanvasTexture {
   const c = document.createElement("canvas");
   c.width = 256;
   c.height = 256;
@@ -76,8 +76,8 @@ export function makeGlowTexture(inner = "#ffe9c4", outer = "#ffd9a8"): THREE.Can
 }
 
 /** Procedurally generated reverb impulse response. */
-export function makeImpulseResponse(seconds = 1.8, decay = 3.2): AudioBuffer {
-  const rate = 44100;
+export function makeImpulseResponse(seconds = 1.8, decay = 3.2, sampleRate?: number): AudioBuffer {
+  const rate = sampleRate ?? 44100;
   const length = Math.floor(rate * seconds);
   const buffer = new AudioBuffer({ numberOfChannels: 2, length, sampleRate: rate });
   for (let ch = 0; ch < 2; ch++) {
@@ -198,8 +198,8 @@ function heightToColor(src: HTMLCanvasElement): THREE.CanvasTexture {
   const ctx = out.getContext("2d")!;
   const img = ctx.createImageData(w, h);
   const d = img.data;
-  const warmC = [0x55, 0x39, 0x22];
-  const deepC = [0x24, 0x1a, 0x11];
+  const warmC = [0x6b, 0x49, 0x2c];
+  const deepC = [0x2e, 0x22, 0x16];
   for (let i = 0; i < d.length; i += 4) {
     const t = data[i] / 255;
     const n = (Math.random() - 0.5) * 9;

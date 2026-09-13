@@ -2,13 +2,12 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { useExperience } from "../state/useExperience";
 import { experienceConfig } from "../experience.config";
-import { quality, prefersReducedMotion } from "../lib/quality";
-import { Atmosphere } from "../components/Atmosphere";
+import { prefersReducedMotion } from "../lib/quality";
 
 /**
- * SCENE 04 — the cinematic reveal behind the door. Text is fully
- * config-driven and animates like film titles: masked word reveals,
- * letter tracking, blur-in, calm timing.
+ * The world behind the door. A quiet, cinematic title sequence —
+ * no particles, no decoration; the flowing gradient and typography
+ * carry the feeling.
  */
 export function RevealScene() {
   const setStage = useExperience((s) => s.setStage);
@@ -25,7 +24,6 @@ export function RevealScene() {
   useEffect(() => {
     const words = line1.split(" ");
     const line = first.current!;
-
     line.innerHTML = "";
     for (const w of words) {
       const mask = document.createElement("span");
@@ -37,45 +35,44 @@ export function RevealScene() {
       line.appendChild(mask);
     }
 
-    const tl = gsap.timeline({ delay: 0.6 });
+    const tl = gsap.timeline({ delay: 0.35 });
     if (reduce) {
-      tl.fromTo(".rev-word, .rev-sub", { opacity: 0 }, { opacity: 1, duration: 1.4, stagger: 0.15, ease: "power2.out" });
+      tl.fromTo(".rev-word, .rev-sub", { opacity: 0 }, { opacity: 1, duration: 1.2, stagger: 0.14, ease: "power2.out" });
     } else {
-      tl.fromTo(".rev-word", { yPercent: 125, opacity: 0.6 }, {
+      tl.fromTo(".rev-word", { yPercent: 126, opacity: 0.5, filter: "blur(6px)" }, {
         yPercent: 0,
         opacity: 1,
-        duration: 1.3,
-        stagger: 0.1,
+        filter: "blur(0px)",
+        duration: 1.45,
+        stagger: 0.11,
         ease: "power4.out",
       }, 0);
-      tl.fromTo(second.current, { opacity: 0, letterSpacing: "0.42em", filter: "blur(10px)", scale: 0.985 }, {
+      tl.fromTo(second.current, { opacity: 0, letterSpacing: "0.4em", filter: "blur(12px)", scale: 0.98 }, {
         opacity: 1,
-        letterSpacing: "0.06em",
+        letterSpacing: "0.05em",
         filter: "blur(0px)",
         scale: 1,
-        duration: 2.0,
+        duration: 2.1,
         ease: "power3.out",
       }, gap / 1000);
-      tl.fromTo(sub.current, { opacity: 0, y: 10 }, { opacity: 0.62, y: 0, duration: 1.2, ease: "power2.out" }, gap / 1000 + 1.0);
+      tl.fromTo(sub.current, { opacity: 0, y: 10 }, { opacity: 0.62, y: 0, duration: 1.2, ease: "power2.out" }, gap / 1000 + 1.1);
     }
-    tl.to(cont.current, { opacity: 1, y: 0, duration: 0.9, ease: "power2.out" }, reduce ? 0.6 : (gap + after) / 1000);
+    tl.to(cont.current, { opacity: 1, y: 0, duration: 1.0, ease: "power2.out" }, reduce ? 0.6 : (gap + after) / 1000);
     return () => {
       tl.kill();
     };
   }, [line1, gap, after, reduce]);
 
   const onContinue = () => {
-    cont.current && gsap.to(cont.current, { opacity: 0, duration: 0.4 });
-    gsap.to(root.current, { opacity: 0, filter: "blur(8px)", duration: 0.9, ease: "power2.in", onComplete: () => setStage("scroll") });
+    if (cont.current) gsap.to(cont.current, { opacity: 0, duration: 0.4 });
+    gsap.to(root.current, { opacity: 0, filter: "blur(8px)", duration: 1.0, ease: "power2.in", onComplete: () => setStage("scroll") });
   };
 
   return (
     <div className="screen reveal-screen" ref={root} role="presentation">
-      <div className="reveal-screen__base" />
-      <div className="reveal-screen__glow" />
-      <div className="reveal-screen__floorlight" />
-      <Atmosphere count={Math.round(130 * quality.maxParticleRatio)} color="rgba(255,214,166,0.5)" speed={0.22} large />
       <div className="reveal-screen__scrim" />
+      <div className="reveal-screen__glow" />
+      <div className="rev-tl" />
 
       <div className="reveal-screen__inner">
         <p className="rev-first" ref={first} aria-label={line1} />

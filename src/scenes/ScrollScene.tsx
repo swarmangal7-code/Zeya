@@ -5,7 +5,6 @@ import Lenis from "lenis";
 import { useExperience } from "../state/useExperience";
 import { experienceConfig } from "../experience.config";
 import { prefersReducedMotion } from "../lib/quality";
-import { Atmosphere } from "../components/Atmosphere";
 import { Asterisk } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -97,10 +96,9 @@ export function ScrollScene() {
     };
   }, [reduce]);
 
-  return (
+return (
     <div className="sc" ref={root}>
-      <Atmosphere count={70} color="rgba(255,214,166,0.35)" speed={0.14} className="sc__atmo" />
-
+      <div className="sc__veil" aria-hidden />
       <header className="sc__header">
         <span className="sc__running">{running}</span>
         <button className="sc__replay" onClick={() => setStage("locked")} data-cursor>

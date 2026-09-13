@@ -16,7 +16,7 @@ function WoodMaterial({ base, repeatX }: { base: string; repeatX: number }) {
     const m = new THREE.MeshPhysicalMaterial();
     m.map = maps.color.clone();
     m.normalMap = maps.normal.clone();
-    m.normalScale = new THREE.Vector2(0.55, 0.55);
+    m.normalScale = new THREE.Vector2(0.85, 0.85);
     m.roughnessMap = maps.rough.clone();
     m.map.repeat.set(repeatX, 1);
     m.normalMap.repeat.set(repeatX, 1);
@@ -25,11 +25,11 @@ function WoodMaterial({ base, repeatX }: { base: string; repeatX: number }) {
     m.normalMap.needsUpdate = true;
     m.roughnessMap.needsUpdate = true;
     m.color = new THREE.Color(base);
-    m.roughness = 0.58;
-    m.metalness = 0.0;
-    m.clearcoat = 0.7;
-    m.clearcoatRoughness = 0.45;
-    m.envMapIntensity = 0.75;
+    m.roughness = 0.48;
+    m.metalness = 0.02;
+    m.clearcoat = 1.0;
+    m.clearcoatRoughness = 0.3;
+    m.envMapIntensity = 1.15;
     return m;
   }, [base, repeatX]);
   return <primitive object={mat} attach="material" />;
@@ -77,7 +77,7 @@ function DoorLeaf({ side }: { side: "left" | "right" }) {
     { h: 0.9, y: 0.14 },
   ];
   const innerW = w - 0.38;
-  const dark = side === "left" ? "#241a11" : "#2c2116";
+  const dark = side === "left" ? "#2B2117" : "#352A20";
 
   return (
     <group ref={pivot} position={[0, 0, 0]}>
@@ -85,20 +85,20 @@ function DoorLeaf({ side }: { side: "left" | "right" }) {
         {/* stiles / rails */}
         <mesh position={[side === "left" ? w / 2 - 0.085 : -(w / 2 - 0.085), 0, 0]}>
           <boxGeometry args={[0.17, H, TH]} />
-          <WoodMaterial base="#2a1e13" repeatX={1.2} />
+          <WoodMaterial base="#3A2C1E" repeatX={1.2} />
         </mesh>
         <mesh position={[0, H / 2 - 0.085, 0]}>
           <boxGeometry args={[w - 0.34, 0.17, TH]} />
-          <WoodMaterial base="#2a1e13" repeatX={2} />
+          <WoodMaterial base="#3A2C1E" repeatX={2} />
         </mesh>
         <mesh position={[0, -(H / 2 - 0.045), 0]}>
           <boxGeometry args={[w - 0.34, 0.12, TH]} />
-          <WoodMaterial base="#22170f" repeatX={2} />
+          <WoodMaterial base="#2E2318" repeatX={2} />
         </mesh>
         {/* mid rail where the handles live */}
         <mesh position={[0, -0.52, 0]}>
           <boxGeometry args={[w - 0.34, 0.14, TH]} />
-          <WoodMaterial base="#241a11" repeatX={2} />
+          <WoodMaterial base="#33271A" repeatX={2} />
         </mesh>
 
         {/* beveled inset panels */}
@@ -197,21 +197,21 @@ export function DoorAssembly() {
         {/* frame posts */}
         <mesh position={[-W / 2 - 0.08, H / 2, 0]}>
           <boxGeometry args={[0.18, H + 0.5, 0.4]} />
-          <WoodMaterial base="#241a12" repeatX={1} />
+          <WoodMaterial base="#2A2016" repeatX={1} />
         </mesh>
         <mesh position={[W / 2 + 0.08, H / 2, 0]}>
           <boxGeometry args={[0.18, H + 0.5, 0.4]} />
-          <WoodMaterial base="#241a12" repeatX={1} />
+          <WoodMaterial base="#2A2016" repeatX={1} />
         </mesh>
         {/* lintel */}
         <mesh position={[0, H + 0.19, 0]}>
           <boxGeometry args={[W + 0.36, 0.22, 0.44]} />
-          <WoodMaterial base="#201710" repeatX={1} />
+          <WoodMaterial base="#281E14" repeatX={1} />
         </mesh>
         {/* threshold */}
         <mesh position={[0, -0.05, 0]}>
           <boxGeometry args={[W + 0.36, 0.1, 0.4]} />
-          <WoodMaterial base="#1c150e" repeatX={1} />
+          <WoodMaterial base="#241A12" repeatX={1} />
         </mesh>
 
         {/* leaves hinged at outer edges */}
@@ -236,17 +236,17 @@ export function DoorAssembly() {
       </mesh>
 
       {/* warm light leaking from inside */}
-      <pointLight ref={interiorLight} position={[0, H / 2, -1.2]} intensity={0} distance={8} color="#ffc98a" decay={2} />
+      <pointLight ref={interiorLight} position={[0, H / 2, -1.2]} intensity={0} distance={8} color="#A9C2FF" decay={2} />
 
       {/* soft light on the handles once opening is available */}
-      <pointLight ref={handleLight} position={[0, 1.15, 1.1]} intensity={0} distance={2.4} color="#ffd9a8" />
+      <pointLight ref={handleLight} position={[0, 1.32, 1.1]} intensity={0} distance={2.4} color="#C6D4F6" />
 
       {/* key light, casts the door's shadow on the floor */}
       {quality.shadows && (
         <directionalLight
           ref={keyLight}
           position={[-3.4, 6, 4.4]}
-          intensity={0.4}
+          intensity={0.62}
           castShadow
           shadow-mapSize-width={quality.shadowMapSize}
           shadow-mapSize-height={quality.shadowMapSize}
@@ -258,14 +258,20 @@ export function DoorAssembly() {
           shadow-camera-bottom={-1}
         />
       )}
-      {!quality.shadows && <directionalLight ref={keyLight} position={[-3.4, 6, 4.4]} intensity={0.4} />}
+      {!quality.shadows && <directionalLight ref={keyLight} position={[-3.4, 6, 4.4]} intensity={0.62} />}
+
+      {/* soft pool of cool light on the floor beneath the door, grounding the composition */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.008, 0.35]} scale={[4.2, 2.4, 1]}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial map={glow} transparent depthWrite={false} blending={THREE.AdditiveBlending} opacity={0.07} toneMapped={false} />
+      </mesh>
 
       {/* floating dust */}
       <points ref={dust} position={[0, 0, 0]}>
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[dustPositions, 3]} />
         </bufferGeometry>
-        <pointsMaterial color="#ffdfaf" size={0.014} transparent opacity={0.35} depthWrite={false} sizeAttenuation blending={THREE.AdditiveBlending} />
+        <pointsMaterial color="#B9C7DD" size={0.014} transparent opacity={0.32} depthWrite={false} sizeAttenuation blending={THREE.AdditiveBlending} />
       </points>
     </group>
   );

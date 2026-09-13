@@ -96,12 +96,14 @@ function DoorWorld() {
       shadows={quality.shadows}
       dpr={quality.dpr}
       gl={{
+        alpha: true,
         antialias: quality.tier !== "low",
         powerPreference: "high-performance",
         toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 1.05,
+        toneMappingExposure: 1.22,
       }}
-      camera={{ fov: 42, position: [0, 0.55, 6.4], near: 0.1, far: 40 }}
+      onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
+      camera={{ fov: 40, position: [0, 0.55, 7.5], near: 0.1, far: 40 }}
     >
       <SceneContent />
     </Canvas>

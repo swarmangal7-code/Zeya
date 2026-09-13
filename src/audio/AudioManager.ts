@@ -19,6 +19,8 @@ class AudioManager {
   private ambientGain: GainNode | null = null;
   private started = false;
   muted = false;
+  /** last init failure, surfaced to the dev probe for debugging */
+  lastError: string | null = null;
 
   /** Create the context and routing graph (no resume — safe pre-gesture). */
   private initCtx(): boolean {
@@ -32,7 +34,7 @@ class AudioManager {
       this.master.connect(this.ctx.destination);
 
       this.convolver = this.ctx.createConvolver();
-      this.convolver.buffer = makeImpulseResponse(1.9, 2.4);
+      this.convolver.buffer = makeImpulseResponse(1.9, 2.4, this.ctx.sampleRate);
       this.preDelay = this.ctx.createDelay(0.15);
       this.preDelay.delayTime.value = (experienceConfig.audio.preDelayMs || 32) / 1000;
       this.preDelay.connect(this.convolver);
@@ -45,11 +47,13 @@ class AudioManager {
       this.sfxBus.gain.value = experienceConfig.audio.sfxVolume;
       this.sfxBus.connect(this.master);
       this.ambBus = this.ctx.createGain();
-      this.ambBus.gain.value = 0;
+      /** must be audible — the ambient swarm fades itself in via startAmbient */
+      this.ambBus.gain.value = 1;
       this.ambBus.connect(this.master);
       return true;
-    } catch {
+    } catch (err) {
       this.ctx = null;
+      this.lastError = err instanceof Error ? err.message : String(err);
       return false;
     }
   }
@@ -60,8 +64,9 @@ class AudioManager {
     try {
       if (!this.initCtx()) return;
       if (this.ctx && this.ctx.state === "suspended") await this.ctx.resume();
-    } catch {
+    } catch (err) {
       this.ctx = null;
+      this.lastError = err instanceof Error ? err.message : String(err);
     }
   }
 
@@ -361,6 +366,49 @@ class AudioManager {
       const o = this.ambientNodes[i] as OscillatorNode;
       try { o.frequency.linearRampToValueAtTime(o.frequency.value + 8, t + 3); } catch { /* noop */ }
     }
+  }
+
+  /** Slow harmonic swell as the world behind the door arrives. */
+  revealSwell(): void {
+    if (!this.ensure()) return;
+    const t = this.ctx!.currentTime;
+    const c = this.ctx!;
+    const out = c.createGain();
+    out.gain.setValueAtTime(0.0001, t);
+    out.gain.linearRampToValueAtTime(0.05, t + 3.5);
+    out.gain.linearRampToValueAtTime(0.0001, t + 9.5);
+    const lp = c.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = 720;
+    out.connect(lp).connect(this.master!);
+
+    [65.41, 98.0, 130.81, 196.0].forEach((f, i) => {
+      const o = c.createOscillator();
+      o.type = "sine";
+      o.frequency.value = f;
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(0.35, t + 1.4 + i * 0.4);
+      g.gain.linearRampToValueAtTime(0.0001, t + 9);
+      o.connect(g).connect(lp);
+      o.start(t);
+      o.stop(t + 9.2);
+    });
+
+    // breath of air crossing the threshold
+    const noise = this.noiseSource(this.noiseBuffer(8));
+    noise.loop = true;
+    const bp = c.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = 1400;
+    bp.Q.value = 0.7;
+    const ng = c.createGain();
+    ng.gain.setValueAtTime(0.0001, t);
+    ng.gain.linearRampToValueAtTime(0.018, t + 2.6);
+    ng.gain.linearRampToValueAtTime(0.0001, t + 8);
+    noise.connect(bp).connect(ng).connect(out);
+    noise.start(t);
+    noise.stop(t + 8.2);
   }
 }
 

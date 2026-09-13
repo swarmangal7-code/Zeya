@@ -5,64 +5,62 @@ import { experienceConfig } from "../experience.config";
 import { prefersReducedMotion } from "../lib/quality";
 
 /**
- * The "Open the door" CTA — designed as part of the scene, not a widget.
- * Magnetic on desktop, dissolves cinematically on click.
+ * "Open the door" — physically part of the door stage, not a web button.
+ * Positioned near the lower-central safe zone so it reads as connected
+ * to the door composition. Magnetic on desktop, dissolves on click.
  */
 export function OpenCta({ visible, onOpen }: { visible: boolean; onOpen: () => void }) {
-  const root = useRef<HTMLButtonElement>(null);
+  const root = useRef<HTMLDivElement>(null);
+  const btn = useRef<HTMLButtonElement>(null);
   const { openCta, swipe } = experienceConfig.text.door;
-  const opened = useRef(false);
 
   useEffect(() => {
     if (!root.current) return;
     gsap.to(root.current, {
       opacity: visible ? 1 : 0,
-      y: visible ? 0 : 12,
+      y: visible ? 0 : 14,
       duration: 0.9,
       ease: "power3.out",
       pointerEvents: visible ? "auto" : "none",
     });
-    if (visible) gsap.fromTo(".open-cta__line", { scaleX: 0 }, { scaleX: 1, duration: 1.4, ease: "power3.inOut", delay: 0.2 });
+    if (visible) gsap.fromTo(".open-cta__line", { scaleX: 0 }, { scaleX: 1, duration: 1.4, ease: "power3.inOut", delay: 0.15 });
   }, [visible]);
 
   const handleOpen = () => {
-    if (opened.current) return;
-    opened.current = true;
     onOpen();
-    if (root.current) {
-      gsap.to(root.current, { opacity: 0, y: -18, filter: "blur(6px)", duration: 0.8, ease: "power3.in" });
-    }
+    if (root.current) gsap.to(root.current, { opacity: 0, y: -16, filter: "blur(6px)", duration: 0.8, ease: "power3.in" });
   };
 
   const onMove = (e: React.PointerEvent) => {
-    if (prefersReducedMotion || !root.current) return;
-    const rect = root.current.getBoundingClientRect();
+    if (prefersReducedMotion || !btn.current) return;
+    const rect = btn.current.getBoundingClientRect();
     const dx = e.clientX - (rect.left + rect.width / 2);
     const dy = e.clientY - (rect.top + rect.height / 2);
-    gsap.to(root.current, { x: dx * 0.22, y: dy * 0.22, duration: 0.5, ease: "power2.out" });
+    gsap.to(btn.current, { x: dx * 0.18, y: dy * 0.18, duration: 0.5, ease: "power2.out" });
   };
 
   const onLeave = () => {
-    if (root.current) gsap.to(root.current, { x: 0, y: 0, duration: 0.8, ease: "power3.out" });
+    if (btn.current) gsap.to(btn.current, { x: 0, y: 0, duration: 0.7, ease: "power3.out" });
   };
 
   return (
-    <button
-      ref={root}
-      className="open-cta"
-      onClick={handleOpen}
-      onPointerMove={onMove}
-      onPointerLeave={onLeave}
-      style={{ opacity: 0, pointerEvents: "none" }}
-      aria-label={openCta}
-      data-cursor="open"
-    >
-      <span className="open-cta__label">{openCta}</span>
-      <span className="open-cta__arrow" aria-hidden>
-        <ArrowUpRight size={18} strokeWidth={1.4} />
-      </span>
-      <span className="open-cta__line" aria-hidden />
+    <div className="open-cta" ref={root} style={{ opacity: 0, pointerEvents: "none" }} aria-hidden={!visible}>
+      <button
+        ref={btn}
+        className="open-cta__btn"
+        onClick={handleOpen}
+        onPointerMove={onMove}
+        onPointerLeave={onLeave}
+        aria-label={openCta}
+        data-cursor="open"
+      >
+        <span className="open-cta__label">{openCta}</span>
+        <span className="open-cta__arrow" aria-hidden>
+          <ArrowUpRight size={16} strokeWidth={1.4} />
+        </span>
+        <span className="open-cta__line" aria-hidden />
+      </button>
       <span className="open-cta__swipe">{swipe}</span>
-    </button>
+    </div>
   );
 }

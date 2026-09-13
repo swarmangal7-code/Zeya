@@ -1,11 +1,10 @@
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { director } from "../director";
+import { experienceConfig } from "../experience.config";
 import { prefersReducedMotion } from "../lib/quality";
 
-// World-space bounds the camera must keep fully in frame: door + frame.
-const HALF_W = 2.05;
-const HALF_V = 2.55;
+const { fitHalfW, fitHalfV } = experienceConfig.camera;
 
 /**
  * Cinematic camera. Smoothly approaches the director's target, adds a faint
@@ -21,7 +20,7 @@ export function CameraRig() {
     const fovR = (director.fovTarget * Math.PI) / 180;
     const t = Math.tan(fovR / 2);
     const aspect = state.size.width / state.size.height;
-    const fit = Math.max(HALF_V / t, HALF_W / (t * aspect));
+    const fit = Math.max(fitHalfV / t, fitHalfW / (t * aspect));
     if (Math.abs(fit - director.fitZ) > 0.02) {
       director.fitZ = fit;
       director.adoptFitZ();
