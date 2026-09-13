@@ -260,18 +260,18 @@ class Director {
   }
 
   /* ------------------------------------------------------------------ */
-  /* STEP INSIDE — physically walking through the doorway                */
+  /* Automatic entry — the camera walks into the interior               */
   /* ------------------------------------------------------------------ */
 
   /**
-   * The camera lifts toward eye level, looks into the interior, then moves
-   * forward through the doorway. The door stays mounted; geometry simply
-   * leaves the frame as the camera passes.
+   * A single continuous cinematic entry. The camera approaches the
+   * doorway at eye height, crosses the threshold, and settles deep in the
+   * corridor where the multi-room network is visible. No clicks.
    *
-   * onEntered fires once the threshold has been crossed (interior in view),
-   * onSettled when the entering pose is complete.
+   * onEntered fires once the camera is safely inside (interior in view),
+   * onSettled when the reveal pose is reached.
    */
-  enterDoor(onEntered?: () => void, onSettled?: () => void): void {
+  enterInterior(onEntered?: () => void, onSettled?: () => void): void {
     this.doorOpenInitiated = true;
     this.setCameraMode("entering");
     const tl = gsap.timeline();
@@ -285,37 +285,34 @@ class Director {
       gsap.set(this, { fovTarget: int.fov });
       this.setCameraMode("interior");
       this.tintInteriorLight(0.85);
-      if (this.keyLight) gsap.to(this.keyLight, { intensity: 0.4, duration: 1 });
+      if (this.keyLight) gsap.to(this.keyLight, { intensity: 0.35, duration: 1 });
       onEntered?.();
       onSettled?.();
       return;
     }
 
-    // ENTER — strict phases: LIFT → LOOK → FORWARD → CROSS → SETTLE
-    // 1 — lift only, eye height, no forward travel yet
-    tl.to(this.camTarget, { y: thr.y, duration: 0.85, ease: "power2.inOut" }, 0)
-      // 2 — look forward into the interior, body held
-      .to(this.camLook, { y: thr.lookY, z: thr.lookZ, duration: 1.0, ease: "power2.inOut" }, 0.25)
-      .to(this, { fovTarget: 48, duration: 1.2, ease: "power2.inOut" }, 0.35)
-      // 3 — forward walk through the doorway
-      .to(this.camTarget, { z: int.z, duration: 1.55, ease: "power2.inOut" }, 0.85)
-      .to(this.camTarget, { y: int.y, duration: 1.55, ease: "power2.inOut" }, 0.85)
-      .to(this.camLook, { y: int.lookY, z: int.lookZ, duration: 1.45, ease: "power2.inOut" }, 0.9)
-      .to(this, { dofFocus: 0.32, dofBokeh: 1.5, duration: 1.4, ease: "power2.inOut" }, 0.9)
-      .to(this, { fovTarget: int.fov, duration: 1.1, ease: "power2.inOut" }, 1.15);
+    // PHASE B — approach the doorway, eye height held
+    tl.to(this.camTarget, { z: thr.z, y: thr.y, duration: 1.7, ease: "power2.inOut" }, 0)
+      .to(this.camLook, { y: thr.lookY, z: thr.lookZ, duration: 1.6, ease: "power2.inOut" }, 0.1)
+      .to(this, { fovTarget: 47, duration: 1.5, ease: "power2.inOut" }, 0.15)
+      // PHASE C/D — cross the threshold and walk into the corridor
+      .to(this.camTarget, { z: int.z, y: int.y, duration: 2.8, ease: "power2.inOut" }, 1.3)
+      .to(this.camLook, { y: int.lookY, z: int.lookZ, duration: 2.6, ease: "power2.inOut" }, 1.5)
+      .to(this, { dofFocus: 0.34, dofBokeh: 1.5, duration: 2.2, ease: "power2.inOut" }, 1.6)
+      .to(this, { fovTarget: int.fov, duration: 2.0, ease: "power2.inOut" }, 1.8);
 
-    // blue interior spill shifts toward cool white as we cross (z crosses ~0 at t≈1.35)
-    tl.call(() => this.tintInteriorLight(0.65), undefined, 1.05);
-    tl.call(() => this.tintInteriorLight(1), undefined, 1.6);
+    // threshold crossing (camera z passes ~0 around t≈1.4)
+    tl.call(() => this.tintInteriorLight(0.6), undefined, 1.1);
+    tl.call(() => this.tintInteriorLight(1), undefined, 1.7);
 
-    // room key yields to the interior
-    if (this.keyLight) tl.to(this.keyLight, { intensity: 0.4, duration: 1.4 }, 0.95);
+    // exterior key yields to the interior's own lighting
+    if (this.keyLight) tl.to(this.keyLight, { intensity: 0.35, duration: 1.6 }, 0.9);
 
     tl.call(() => {
       this.setCameraMode("interior");
       onEntered?.();
-    }, undefined, 1.4);
-    tl.call(() => onSettled?.(), undefined, 2.15);
+    }, undefined, 2.4);
+    tl.call(() => onSettled?.(), undefined, 4.2);
   }
 
   /** Progression of the interior light toward cool white (0..1). */

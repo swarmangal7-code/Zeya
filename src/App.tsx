@@ -9,7 +9,6 @@ import { CinematicGradient } from "./components/CinematicGradient";
 import type { GradientVariantKey } from "./experience.config";
 import { LoadingScene } from "./scenes/LoadingScene";
 import { LockScreenScene } from "./scenes/LockScreenScene";
-import { RevealScene } from "./scenes/RevealScene";
 import { Volume2, VolumeX } from "lucide-react";
 
 const DoorScene = lazy(() =>
@@ -17,6 +16,9 @@ const DoorScene = lazy(() =>
 );
 const ScrollScene = lazy(() =>
   import("./scenes/ScrollScene").then((m) => ({ default: m.ScrollScene })),
+);
+const InteriorText = lazy(() =>
+  import("./scenes/InteriorText").then((m) => ({ default: m.InteriorText })),
 );
 
 const gradientVariant = (stage: ReturnType<typeof useExperience.getState>["stage"]): GradientVariantKey => {
@@ -81,7 +83,11 @@ export default function App() {
 
       {stage === "loading" && <LoadingScene />}
       {(stage === "locked" || stage === "unlocking") && <LockScreenScene />}
-      {(stage === "interior_reveal" || stage === "revealed") && <RevealScene />}
+      {(stage === "interior_reveal" || stage === "revealed") && (
+        <Suspense fallback={null}>
+          <InteriorText />
+        </Suspense>
+      )}
 
       {isScroll && (
         <Suspense fallback={null}>

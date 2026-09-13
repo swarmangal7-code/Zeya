@@ -1,4 +1,4 @@
-export type DoorEventType = "knock" | "open" | "enter";
+export type DoorEventType = "knock" | "open";
 export interface DoorEventDetail {
   variant?: 1 | 2;
 }

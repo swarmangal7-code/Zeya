@@ -43,8 +43,44 @@ export const experienceConfig = {
       front: { z: 9.2, y: 1.55, lookY: 2.0, fov: 42 },      // z recomputed from fit-math
       opening: { z: 7.1, y: 1.55, lookY: 1.95, fov: 45 },   // tiny push, eye height held
       doorOpen: { z: 6.4, y: 1.58, lookY: 1.95, fov: 46 },
-      threshold: { z: 6.0, y: 1.66, lookZ: -4.8, lookY: 1.92 }, // LIFT + LOOK
-      interior: { z: -5.0, y: 1.7, lookZ: -9.5, lookY: 1.92, fov: 51 },
+      threshold: { z: 1.6, y: 1.62, lookY: 1.95, lookZ: -7 },   // approach mid-phase
+      interior: { z: -8.5, y: 1.7, lookY: 2.0, lookZ: -20, fov: 50 },
+    },
+  },
+
+  /* ------------------------------------------------------------------ */
+  /* Interior — multi-room architectural network behind the door         */
+  /* ------------------------------------------------------------------ */
+  interior: {
+    /** hold after the door is fully open before entry begins automatically */
+    entryHoldMs: 1200,
+    entryDurationMs: 4600,
+    corridor: {
+      startZ: -4.4,
+      endZ: -23,
+      halfWidth: 2.9,
+      height: 4.0,
+    },
+    rooms: {
+      left: [
+        { z: -6.4, w: 1.3, open: 0.25, light: "none" },
+        { z: -10.6, w: 1.1, open: 0, light: "none" },
+        { z: -14.8, w: 1.4, open: 0.85, light: "cool" },
+        { z: -18.6, w: 1.2, open: 0, light: "warm" },
+      ],
+      right: [
+        { z: -5.6, w: 1.2, open: 0, light: "warm" },
+        { z: -9.8, w: 1.5, open: 0.7, light: "cool" },
+        { z: -13.9, w: 1.1, open: 0, light: "none" },
+        { z: -17.7, w: 1.3, open: 0.4, light: "none" },
+      ],
+    },
+    text: {
+      content: "God responded me, so luck i am",
+      appearAfterMs: 800,
+      stayMs: 6000,
+      fadeMs: 1400,
+      continueAfterMs: 1300,
     },
   },
 
@@ -167,19 +203,13 @@ export const experienceConfig = {
     },
     door: {
       openCta: "Open the door",
-      stepInside: "Step inside",
       swipe: "Two hands. One push.",
-    },
-    reveal: {
-      first: "Some doors are worth opening.",
-      second: "Welcome.",
-      sub: "make yourself at home",
-      continueLabel: "continue",
     },
     scroll: {
       running: "where doors open",
       replay: "replay",
       endNote: "To be continued — same place, next time.",
+      continue: "continue",
     },
   },
 

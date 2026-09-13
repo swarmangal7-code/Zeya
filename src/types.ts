@@ -8,7 +8,6 @@ export type Stage =
   | "open_available"
   | "opening"
   | "door_open"
-  | "step_inside_available"
   | "entering"
   | "interior_reveal"
   | "revealed"

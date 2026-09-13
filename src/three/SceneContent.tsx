@@ -8,6 +8,7 @@ import { director } from "../director";
 import { DoorModel } from "./DoorModel";
 import { CameraRig } from "./CameraRig";
 import { ArchitecturalEnvironment } from "./ArchitecturalEnvironment";
+import { InteriorNetwork } from "./InteriorNetwork";
 import { quality } from "../lib/quality";
 import { experienceConfig } from "../experience.config";
 
@@ -16,7 +17,7 @@ export function SceneContent() {
   const camera = useThree((s) => s.camera);
   const cfg = experienceConfig.postprocessing;
   const dofRef = useRef<unknown>(null);
-  const fog = useMemo(() => new THREE.Fog("#0A0F1C", 5.0, 13.0), []);
+  const fog = useMemo(() => new THREE.Fog("#0A0F1C", 6.0, 30.0), []);
 
   useEffect(() => {
     scene.fog = fog;
@@ -40,6 +41,9 @@ export function SceneContent() {
 
       {/* the architectural space the door is installed into */}
       <ArchitecturalEnvironment />
+
+      {/* the multi-room network behind the door */}
+      <InteriorNetwork />
 
       <DoorModel />
 

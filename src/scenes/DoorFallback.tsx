@@ -5,7 +5,8 @@ import { onDoor } from "./doorEvents";
 
 /**
  * WebGL-free cinematic door (CSS 3D). Same staging, feedback and flow as the
- * R3F door — used automatically when WebGL is unavailable.
+ * R3F door — used automatically when WebGL is unavailable. Entry into the
+ * interior happens automatically once the door is fully open.
  */
 export function DoorFallback() {
   const frame = useRef<HTMLDivElement>(null);
@@ -13,6 +14,7 @@ export function DoorFallback() {
   const right = useRef<HTMLDivElement>(null);
   const glow = useRef<HTMLDivElement>(null);
   const floor = useRef<HTMLDivElement>(null);
+  const stage = useExperience((s) => s.stage);
 
   useEffect(() => {
     const offKnock = onDoor("knock", (d) => {
@@ -40,23 +42,23 @@ export function DoorFallback() {
         .call(() => setStage("door_open"), undefined, 2.2);
     });
 
-    // walk-through approximation: the door slips past as the camera enters
-    const offEnter = onDoor("enter", () => {
-      const setStage = useExperience.getState().setStage;
-      gsap
-        .timeline()
-        .to(frame.current, { opacity: 0, x: 46, duration: 1.6, ease: "power2.in" }, 0)
-        .to(glow.current, { opacity: 0.55, duration: 1.4 }, 0.2)
-        .call(() => setStage("interior_reveal"), undefined, 1.1)
-        .call(() => setStage("revealed"), undefined, 2.0);
-    });
-
     return () => {
       offKnock();
       offOpen();
-      offEnter();
     };
   }, []);
+
+  // automatic entry — the door slips past as the camera walks into the interior
+  useEffect(() => {
+    if (stage !== "entering") return;
+    const setStage = useExperience.getState().setStage;
+    gsap
+      .timeline()
+      .to(frame.current, { opacity: 0, x: 46, duration: 1.6, ease: "power2.in" }, 0)
+      .to(glow.current, { opacity: 0.55, duration: 1.4 }, 0.2)
+      .call(() => setStage("interior_reveal"), undefined, 1.1)
+      .call(() => setStage("revealed"), undefined, 2.0);
+  }, [stage]);
 
   return (
     <div className="dfb">

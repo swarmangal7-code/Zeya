@@ -158,48 +158,7 @@ export function ArchitecturalEnvironment() {
         </mesh>
       ))}
 
-      {/* ---------- the corridor, layered in depth ---------- */}
-      {[-2.6, 2.6].map((x) => (
-        <mesh key={`cw${x}`} position={[x, 2.0, -8.0]} rotation-y={x < 0 ? Math.PI / 2 : -Math.PI / 2}>
-          <planeGeometry args={[10, 4.1]} />
-          <meshStandardMaterial {...(m.interior as THREE.MeshStandardMaterial)} />
-        </mesh>
-      ))}
-      <mesh position={[0, 4.1, -8.0]} rotation-x={Math.PI / 2}>
-        <planeGeometry args={[5.2, 10]} />
-        <meshStandardMaterial {...(m.interiorLift as THREE.MeshStandardMaterial)} />
-      </mesh>
-      {/* mid depth — a second frame between vestibule and far end */}
-      {[-1.72, 1.72].map((x) => (
-        <mesh key={`af${x}`} position={[x, 1.9, -8.4]} rotation-y={x < 0 ? Math.PI / 2 : -Math.PI / 2}>
-          <planeGeometry args={[3.8, 3.6]} />
-          <meshStandardMaterial {...(m.interiorLift as THREE.MeshStandardMaterial)} />
-        </mesh>
-      ))}
-
-      {/* ---------- distant recessed architectural light ---------- */}
-      <group position={[0, 0, -13.8]}>
-        {/* dark setting */}
-        <mesh position={[0, 1.9, 0]}>
-          <boxGeometry args={[2.3, 3.4, 0.3]} />
-          <meshStandardMaterial {...(m.panelDark as THREE.MeshStandardMaterial)} />
-        </mesh>
-        {/* softly lit interior of the recess */}
-        <mesh position={[0, 1.9, 0.12]}>
-          <planeGeometry args={[1.9, 2.9]} />
-          <meshStandardMaterial {...(m.emissiveRoom as THREE.MeshStandardMaterial)} />
-        </mesh>
-        {/* metal trim around the opening */}
-        <mesh position={[0, 3.6, 0]}>
-          <boxGeometry args={[2.35, 0.1, 0.34]} />
-          <meshStandardMaterial {...(m.metal as THREE.MeshStandardMaterial)} />
-        </mesh>
-        <mesh position={[0, 0.12, 0]}>
-          <boxGeometry args={[2.35, 0.12, 0.34]} />
-          <meshStandardMaterial {...(m.metal as THREE.MeshStandardMaterial)} />
-        </mesh>
-      </group>
-      <pointLight position={[0, 2.2, -13.0]} intensity={9} distance={13} color="#C7D6F5" decay={2} />
+      {/* corridor interior is built by InteriorNetwork */}
     </group>
   );
 }

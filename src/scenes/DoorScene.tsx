@@ -9,20 +9,20 @@ import { quality } from "../lib/quality";
 import { webglSupported } from "../lib/webgl";
 import { SceneContent } from "../three/SceneContent";
 import { OpenCta } from "./OpenCta";
-import { StepInsideCta } from "./StepInsideCta";
 import { DoorFallback } from "./DoorFallback";
 import { emitDoor, onDoor } from "./doorEvents";
 
 /**
  * The door scene. The webgl world (or CSS fallback) stays mounted through
- * the whole sequence — opening, pausing, walking through — so the door
- * remains physically present until the camera passes it.
+ * the whole sequence. Once the door is fully open, entry begins AUTOMATICALLY
+ * — no clicks, the camera simply walks into the interior.
  */
 export function DoorScene() {
   const stage = useExperience((s) => s.stage);
   const setStage = useExperience((s) => s.setStage);
   const [webgl] = useState(() => webglSupported());
   const { firstDelay, gap, openAvailableAfter } = experienceConfig.timings.knock;
+  const entryHold = experienceConfig.interior.entryHoldMs;
 
   useEffect(() => {
     const handleMove = (e: PointerEvent) => {
@@ -60,20 +60,28 @@ export function DoorScene() {
     };
   }, [stage, setStage, firstDelay, gap, openAvailableAfter]);
 
-  // cinematic lighting states + post-open beats
+  // cinematic lighting states + automatic entry
   useEffect(() => {
     if (stage === "door_idle") director.approachDoor();
     if (stage === "open_available") director.lightHandle();
     if (stage === "door_open") {
       director.setCameraMode("door_open");
-      // deliberate pause: the open room is read before STEP INSIDE is offered
+      director.liftDoorToInterior(); // the interior reads clearly during the hold
       const t = setTimeout(() => {
-        director.liftDoorToInterior();
-        setStage("step_inside_available");
-      }, 1600);
+        setStage("entering");
+        audio.entryTransition();
+        director.enterInterior(
+          () => {
+            audio.startInteriorAmbience();
+            audio.revealSwell();
+            setStage("interior_reveal");
+          },
+          () => setStage("revealed"),
+        );
+      }, entryHold);
       return () => clearTimeout(t);
     }
-  }, [stage]);
+  }, [stage, setStage, entryHold]);
 
   const openNow = () => {
     if (stage !== "open_available" && stage !== "knock_2") return;
@@ -83,18 +91,10 @@ export function DoorScene() {
     emitDoor("open");
   };
 
-  const stepInside = () => {
-    if (stage !== "step_inside_available" && stage !== "door_open") return;
-    setStage("entering");
-    audio.entryTransition();
-    emitDoor("enter");
-  };
-
   return (
     <div className={`door-scene ${stage}`} aria-hidden={stage === "loading" || stage === "locked"}>
       {webgl ? <DoorWorld /> : <DoorFallback />}
       <OpenCta visible={stage === "open_available"} onOpen={openNow} />
-      <StepInsideCta visible={stage === "step_inside_available"} onStep={stepInside} />
     </div>
   );
 }
@@ -105,21 +105,9 @@ function DoorWorld() {
     const offOpen = onDoor("open", () =>
       director.openDoor(() => useExperience.getState().setStage("door_open")),
     );
-    const offEnter = onDoor("enter", () => {
-      const set = useExperience.getState().setStage;
-      director.enterDoor(
-        () => {
-          audio.startInteriorAmbience();
-          audio.revealSwell();
-          set("interior_reveal");
-        },
-        () => set("revealed"),
-      );
-    });
     return () => {
       offKnock();
       offOpen();
-      offEnter();
     };
   }, []);
 
