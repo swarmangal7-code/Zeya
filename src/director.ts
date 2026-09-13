@@ -35,6 +35,14 @@ class Director {
   handleLight: THREE.PointLight | null = null;
 
   doorOpenAmount = 0;
+  /** DepthOfField storytelling targets (lerped by CameraRig) */
+  dofFocus = experienceConfig.postprocessing.dof.focusDistance;
+  dofBokeh = experienceConfig.postprocessing.dof.bokehScale;
+  dofEffect: {
+    focusDistance: number;
+    bokehScale: number;
+    focalLength: number;
+  } | null = null;
 
   private knocked = false;
 
@@ -56,6 +64,11 @@ class Director {
     keyLight?: THREE.DirectionalLight | null;
     handleLight?: THREE.PointLight | null;
     revealFog?: THREE.Fog | null;
+    dofEffect?: {
+      focusDistance: number;
+      bokehScale: number;
+      focalLength: number;
+    } | null;
   }): void {
     if (refs.doorLeft) this.doorLeft = refs.doorLeft;
     if (refs.doorRight) this.doorRight = refs.doorRight;
@@ -66,6 +79,7 @@ class Director {
     if (refs.keyLight) this.keyLight = refs.keyLight;
     if (refs.handleLight) this.handleLight = refs.handleLight;
     if (refs.revealFog) this.revealFog = refs.revealFog;
+    if (refs.dofEffect) this.dofEffect = refs.dofEffect;
   }
 
   /** Adopt a framing distance that fits the door for the current viewport. */
@@ -86,6 +100,21 @@ class Director {
   onPointerMove(x: number, y: number): void {
     this.mouse.x = x;
     this.mouse.y = y;
+  }
+
+  /**
+   * STATE A→B — the door arrives near-dark and is slowly "found" by the
+   * key light. Gradual, never a brightness jump.
+   */
+  approachDoor(): void {
+    if (!this.keyLight) return;
+    gsap.fromTo(this.keyLight, { intensity: 0.14 }, { intensity: 0.62, duration: 4.6, ease: "power2.out", overwrite: true });
+  }
+
+  /** The handle catches a faint highlight once interaction is offered. */
+  lightHandle(): void {
+    if (!this.handleLight) return;
+    gsap.to(this.handleLight, { intensity: 1.4, duration: 1.8, ease: "power2.out", overwrite: true });
   }
 
   /* ------------------------------------------------------------------ */
@@ -202,6 +231,8 @@ class Director {
     }
 
     const revealAt = experienceConfig.timings.opening.revealAt * total;
+    // focus drifts past the door toward the interior as the world is revealed
+    tl.to(this, { dofFocus: 0.3, dofBokeh: 1.5, duration: total * 0.5, ease: "power2.inOut" }, revealAt + 0.3);
     tl.call(
       () => {
         this.doorOpenAmount = 1;

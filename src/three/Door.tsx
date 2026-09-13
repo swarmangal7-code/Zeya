@@ -276,10 +276,10 @@ export function DoorAssembly() {
       </mesh>
 
       {/* warm light leaking from inside */}
-      <pointLight ref={interiorLight} position={[0, H / 2, -1.2]} intensity={0} distance={8} color="#A9C2FF" decay={2} />
+      <pointLight ref={interiorLight} position={[0, H / 2, -1.2]} intensity={0} distance={8} color="#8FA8E0" decay={2} />
 
       {/* soft light on the handles once opening is available */}
-      <pointLight ref={handleLight} position={[0, 1.32, 1.1]} intensity={0} distance={2.4} color="#C6D4F6" />
+      <pointLight ref={handleLight} position={[0, 1.32, 1.1]} intensity={0} distance={2.4} color="#B9C5E8" />
 
       {/* key light, casts the door's shadow on the floor */}
       {quality.shadows && (
@@ -311,7 +311,7 @@ export function DoorAssembly() {
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[dustPositions, 3]} />
         </bufferGeometry>
-        <pointsMaterial color="#B9C7DD" size={0.014} transparent opacity={0.32} depthWrite={false} sizeAttenuation blending={THREE.AdditiveBlending} />
+        <pointsMaterial color="#AEB9CC" size={0.014} transparent opacity={0.32} depthWrite={false} sizeAttenuation blending={THREE.AdditiveBlending} />
       </points>
     </group>
   );

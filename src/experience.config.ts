@@ -10,14 +10,18 @@ export const experienceConfig = {
   pin: (import.meta.env.VITE_EXPERIENCE_PIN as string | undefined) || "1234",
 
   /* ------------------------------------------------------------------ */
-  /* Theme — cool, dark, cinematic ("midnight installation").           */
+  /* Theme — cinematic film grade (near-black graphite → deep navy →    */
+  /* cool blue → muted indigo → cool white highlights).                 */
   /* ------------------------------------------------------------------ */
   theme: {
-    bg: "#05060A",
-    ink: "#EAF0FA",
-    muted: "#8A96AB",
-    accent: "#6D8DFF",
-    accentSoft: "#B9C7DD",
+    bg: "#05070C",
+    graphite: "#0B0F17",
+    navy: "#10182A",
+    midnight: "#17233D",
+    blue: "#536FAF",
+    indigo: "#6E6AA8",
+    ink: "#E8EDF7",
+    silver: "#AEB9CC",
     danger: "#A23D4E",
   },
 
@@ -55,12 +59,13 @@ export const experienceConfig = {
   /* ------------------------------------------------------------------ */
   postprocessing: {
     enabled: true,
-    bloom: { intensity: 0.45, luminanceThreshold: 1.0, luminanceSmoothing: 0.12, radius: 0.65 },
-    dof: { focusDistance: 0.2, focalLength: 0.05, bokehScale: 1.35 },
+    /** bloom only catches the reveal light + strongest highlights — never the door */
+    bloom: { intensity: 0.3, luminanceThreshold: 1.7, luminanceSmoothing: 0.15, radius: 0.6 },
+    dof: { focusDistance: 0.2, focalLength: 0.05, bokehScale: 1.2 },
     /** kept barely perceptible — cinematic image, not an effect reel */
-    chromaticAberration: 0.00012,
-    noise: 0.012,
-    vignette: 0.5,
+    chromaticAberration: 0.0001,
+    noise: 0.01,
+    vignette: 0.48,
   },
 
   /* ------------------------------------------------------------------ */
@@ -72,19 +77,19 @@ export const experienceConfig = {
     },
     lock: {
       /** pause before the lockscreen content resolves in */
-      settleIn: 0.7,
+      settleIn: 0.8,
     },
     knock: {
-      firstDelay: 2100,
-      gap: 1300,
-      openAvailableAfter: 1100,
+      firstDelay: 2600,
+      gap: 1500,
+      openAvailableAfter: 1200,
     },
     opening: {
       total: 4800,
       revealAt: 0.56,
     },
     reveal: {
-      textGap: 2400,
+      textGap: 2500,
       continueAfter: 2200,
     },
   },
@@ -109,26 +114,26 @@ export const experienceConfig = {
   gradient: {
     enabled: true,
     /** darkness of the veil laid over the moving color fields */
-    veil: 0.58,
-    /** seconds for a full layer drift cycle */
-    motionMs: 46000,
-    /** optional restrained accent color per variant (electric blue) */
+    veil: 0.6,
+    /** a full drift cycle is nearly subliminal */
+    motionMs: 62000,
+    /** optional restrained accent color per variant */
     variants: {
       lock: {
-        palette: ["#0A101F", "#101827", "#060814", "#182339"],
-        accent: "#39498F",
+        palette: ["#0B0F17", "#10182A", "#05070C", "#17233D"],
+        accent: "#3A4A7D",
       },
       door: {
-        palette: ["#0B0F1A", "#121A2B", "#070A12", "#1D2A43"],
-        accent: "#2C3E7E",
+        palette: ["#0B0F17", "#121A2E", "#05070C", "#1A2740"],
+        accent: "#3F4E86",
       },
       reveal: {
-        palette: ["#0E1426", "#1B2540", "#0A0D1B", "#28345C"],
-        accent: "#3D53A6",
+        palette: ["#10182A", "#17233D", "#0B0F17", "#212D52"],
+        accent: "#536FAF",
       },
       scroll: {
-        palette: ["#0A0F1E", "#131C31", "#080B15", "#24304F"],
-        accent: "#31427F",
+        palette: ["#0B0F17", "#131E38", "#070B14", "#202D4B"],
+        accent: "#4A5C97",
       },
     },
   },

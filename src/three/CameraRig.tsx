@@ -36,10 +36,24 @@ export function CameraRig() {
     const breathZ = Math.cos(t2 * 0.27) * 0.007 * motion;
     const px = director.mouse.x * 0.045 * motion;
     const py = director.mouse.y * 0.028 * motion;
+    // a near-imperceptible cinematic push-in over time
+    const pushIn = Math.min(t2 * 0.006, 0.18) * motion;
 
     const tx = c.x + px + director.impulse.x * 0.4;
     const ty = c.y + py + breathY + director.impulse.y * 0.4;
-    const tz = c.z + breathZ;
+    const tz = c.z - pushIn + breathZ;
+
+    // depth of field as storytelling: ease toward the director's focus targets
+    const de = director.dofEffect;
+    if (de) {
+      const k = prefersReducedMotion ? 0 : 1 - Math.exp(-dt * 2.2);
+      if (k > 0) {
+        de.focusDistance += (director.dofFocus - de.focusDistance) * k;
+        de.bokehScale += (director.dofBokeh - de.bokehScale) * k;
+        const fl = experienceConfig.postprocessing.dof.focalLength;
+        de.focalLength += (fl - de.focalLength) * k;
+      }
+    }
 
     cam.position.x += (tx - cam.position.x) * d;
     cam.position.y += (ty - cam.position.y) * d;

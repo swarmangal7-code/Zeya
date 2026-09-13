@@ -60,6 +60,12 @@ export function DoorScene() {
     };
   }, [stage, setStage, firstDelay, gap, openAvailableAfter]);
 
+  // cinematic lighting states
+  useEffect(() => {
+    if (stage === "door_idle") director.approachDoor();
+    if (stage === "open_available") director.lightHandle();
+  }, [stage]);
+
   const openNow = () => {
     if (stage !== "open_available" && stage !== "knock_2") return;
     setStage("opening");
@@ -100,7 +106,7 @@ function DoorWorld() {
         antialias: quality.tier !== "low",
         powerPreference: "high-performance",
         toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 1.22,
+        toneMappingExposure: 1.16,
       }}
       onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
       camera={{ fov: 40, position: [0, 0.55, 7.5], near: 0.1, far: 40 }}
