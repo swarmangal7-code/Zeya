@@ -123,7 +123,7 @@ export const experienceConfig = {
   gradient: {
     enabled: true,
     /** darkness of the veil laid over the moving color fields */
-    veil: 0.6,
+    veil: 0.5,
     /** a full drift cycle is nearly subliminal */
     motionMs: 62000,
     /** optional restrained accent color per variant */

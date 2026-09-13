@@ -7,9 +7,9 @@ import { BlendFunction } from "postprocessing";
 import { director } from "../director";
 import { DoorModel } from "./DoorModel";
 import { CameraRig } from "./CameraRig";
+import { ArchitecturalEnvironment } from "./ArchitecturalEnvironment";
 import { quality } from "../lib/quality";
 import { experienceConfig } from "../experience.config";
-import { makeGlowTexture } from "../lib/textures";
 
 export function SceneContent() {
   const scene = useThree((s) => s.scene);
@@ -17,7 +17,6 @@ export function SceneContent() {
   const cfg = experienceConfig.postprocessing;
   const dofRef = useRef<unknown>(null);
   const fog = useMemo(() => new THREE.Fog("#0A0F1C", 5.0, 13.0), []);
-  const glow = useMemo(() => makeGlowTexture("#D6E2F8", "#536FAF"), []);
 
   useEffect(() => {
     scene.fog = fog;
@@ -39,45 +38,10 @@ export function SceneContent() {
         <Lightformer form="rect" position={[5, 1, 4]} rotation-y={-Math.PI / 2} scale={[2, 5, 1]} intensity={0.28} color="#8CA0CE" />
       </Environment>
 
+      {/* the architectural space the door is installed into */}
+      <ArchitecturalEnvironment />
+
       <DoorModel />
-
-      {/* the interior beyond the door — a quiet corridor with a bright end */}
-      <mesh position={[-2.05, 1.7, -8]} rotation-y={Math.PI / 2}>
-        <planeGeometry args={[13, 3.6]} />
-        <meshStandardMaterial color="#0A0E19" roughness={1} />
-      </mesh>
-      <mesh position={[2.05, 1.7, -8]} rotation-y={-Math.PI / 2}>
-        <planeGeometry args={[13, 3.6]} />
-        <meshStandardMaterial color="#0A0E19" roughness={1} />
-      </mesh>
-      <mesh position={[0, 3.6, -8]} rotation-x={Math.PI / 2}>
-        <planeGeometry args={[4.1, 13]} />
-        <meshStandardMaterial color="#0C111C" roughness={1} />
-      </mesh>
-      {/* the light waiting at the end of the corridor */}
-      <mesh position={[0, 2.2, -13.7]} scale={[3.2, 3.2, 1]}>
-        <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial map={glow} transparent depthWrite={false} blending={THREE.AdditiveBlending} opacity={0.2} toneMapped={false} />
-      </mesh>
-      <pointLight position={[0, 2.4, -12.5]} intensity={12} distance={14} color="#C7D6F5" decay={2} />
-
-      {/* the room */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-        <planeGeometry args={[30, 30]} />
-        <meshStandardMaterial color="#0B101B" roughness={0.6} metalness={0.15} envMapIntensity={0.5} />
-      </mesh>
-      <mesh position={[0, 3, -18]} receiveShadow>
-        <planeGeometry args={[30, 8]} />
-        <meshStandardMaterial color="#0C111D" roughness={1} />
-      </mesh>
-      <mesh position={[-12, 3, -6]} rotation-y={Math.PI / 2}>
-        <planeGeometry args={[30, 8]} />
-        <meshStandardMaterial color="#090C16" roughness={1} />
-      </mesh>
-      <mesh position={[12, 3, -6]} rotation-y={-Math.PI / 2}>
-        <planeGeometry args={[30, 8]} />
-        <meshStandardMaterial color="#090C16" roughness={1} />
-      </mesh>
 
       {/* faint fill — keeps the shadow side readable without flattening it */}
       <directionalLight position={[-4.5, 1.4, 5]} intensity={0.06} color="#8CA0CE" />
