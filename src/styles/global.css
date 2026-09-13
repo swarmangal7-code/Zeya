@@ -17,7 +17,11 @@
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
-html, body, #root { height:100%; width:100%; background:var(--bg); }
+html, body { height:100%; width:100%; min-height:100vh; margin:0; background:var(--bg); }
+#root { height:100%; width:100%; min-height:100vh; }
+@supports (height:100dvh) {
+  html, body, #root { min-height:100dvh; }
+}
 body { font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialiased; overflow:hidden; }
 button { font:inherit; color:inherit; background:none; border:none; cursor:pointer; }
 .has-cursor, .has-cursor a, .has-cursor button, .has-cursor input { cursor:none; }
@@ -26,27 +30,54 @@ button { font:inherit; color:inherit; background:none; border:none; cursor:point
    EXPERIENCE SHELL
    ============================================================ */
 
-.experience { position:fixed; inset:0; overflow:hidden; z-index:1; }
-.experience.scrolling { position:static; overflow:visible; min-height:100vh; display:block; }
+/* one authoritative full-viewport shell for every cinematic stage */
+.experience {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden;
+  z-index: 1;
+}
+@supports (height:100dvh) {
+  .experience { height: 100dvh; min-height: 100dvh; }
+}
+.experience.scrolling { position:static; overflow:visible; height:auto; min-height:100vh; display:block; }
+@supports (height:100dvh) {
+  .experience.scrolling { min-height:100dvh; }
+}
 
 /* ---- gradient universe ---- */
-.cgrad { position:fixed; inset:0; z-index:1; pointer-events:none; background:var(--bg); overflow:hidden; }
-.cgrad__parallax { position:absolute; inset:0; will-change:transform; }
+.cgrad { position:fixed; inset:0; z-index:1; width:100%; height:100vh; min-height:100vh; pointer-events:none; background:var(--bg); overflow:hidden; }
+@supports (height:100dvh) {
+  .cgrad { height:100dvh; min-height:100dvh; }
+}
+.cgrad__parallax { position:absolute; inset:0; width:100%; height:100%; will-change:transform; }
 .cgrad__bg { position:absolute; inset:0; background:var(--bg); }
 .cgrad__layer { position:absolute; border-radius:50%; will-change:transform; transform:translate3d(0,0,0); }
 .cgrad__veil { position:absolute; inset:0; z-index:1; }
 
 /* ---- world ---- */
-.world { position:absolute; inset:0; z-index:10; }
+.world { position:absolute; inset:0; width:100%; height:100%; min-height:100%; overflow:hidden; z-index:10; }
 .world canvas { display:block; width:100%; height:100%; }
 
+/* ---- full-viewport door stage ---- */
+.door-scene { position:absolute; inset:0; width:100%; height:100%; min-height:100%; overflow:hidden; }
+
 /* ---- overlays ---- */
-.vignette { position:fixed; inset:0; z-index:33; pointer-events:none;
+.vignette { position:fixed; inset:0; z-index:33; width:100%; height:100vh; min-height:100vh; pointer-events:none;
   background:radial-gradient(120% 90% at 50% 42%, transparent 55%, rgba(0,0,0,0.48) 100%); }
-.grain { position:fixed; inset:0; z-index:34; width:100%; height:100%; pointer-events:none; opacity:0.6; }
+.grain { position:fixed; inset:0; z-index:34; width:100%; height:100vh; min-height:100vh; pointer-events:none; opacity:0.6; }
+@supports (height:100dvh) {
+  .vignette, .grain { height:100dvh; min-height:100dvh; }
+}
 
 /* ---- screens ---- */
-.screen { position:fixed; inset:0; z-index:30; overflow:hidden; }
+.screen { position:fixed; inset:0; z-index:30; width:100%; height:100vh; min-height:100vh; overflow:hidden; }
+@supports (height:100dvh) {
+  .screen { height:100dvh; min-height:100dvh; }
+}
 .screen-scrim { position:absolute; inset:0; pointer-events:none; }
 .screen-scrim--faint { background:rgba(5,6,10,0.55); }
 
