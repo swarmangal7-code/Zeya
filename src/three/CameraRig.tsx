@@ -16,31 +16,34 @@ export function CameraRig() {
     const cam = state.camera;
     if (!(cam instanceof THREE.PerspectiveCamera)) return;
 
-    // fit the door for the current aspect ratio
-    const fovR = (director.fovTarget * Math.PI) / 180;
-    const t = Math.tan(fovR / 2);
-    const aspect = state.size.width / state.size.height;
-    const fit = Math.max(fitHalfV / t, fitHalfW / (t * aspect));
-    if (Math.abs(fit - director.fitZ) > 0.02) {
-      director.fitZ = fit;
-      director.adoptFitZ();
-    }
-
     const d = 1 - Math.exp(-dt * 3.4);
     const t2 = state.clock.elapsedTime;
     const motion = prefersReducedMotion ? 0.15 : 1;
+    const cinematic = director.cinematicMode !== "normal";
+
+    // fit the door for the current aspect ratio (free camera only)
+    if (!cinematic) {
+      const fovR = (director.fovTarget * Math.PI) / 180;
+      const t = Math.tan(fovR / 2);
+      const aspect = state.size.width / state.size.height;
+      const fit = Math.max(fitHalfV / t, fitHalfW / (t * aspect));
+      if (Math.abs(fit - director.fitZ) > 0.02) {
+        director.fitZ = fit;
+        director.adoptFitZ();
+      }
+    }
 
     director.drainImpulse(dt);
     const c = director.camTarget;
-    const breathY = Math.sin(t2 * 0.35) * 0.015 * motion;
-    const breathZ = Math.cos(t2 * 0.27) * 0.007 * motion;
-    const px = director.mouse.x * 0.045 * motion;
-    const py = director.mouse.y * 0.028 * motion;
-    // a near-imperceptible cinematic push-in over time
-    const pushIn = Math.min(t2 * 0.006, 0.18) * motion;
+    // idle life is suspended while a scripted sequence owns the camera
+    const breathY = cinematic ? 0 : Math.sin(t2 * 0.35) * 0.015 * motion;
+    const breathZ = cinematic ? 0 : Math.cos(t2 * 0.27) * 0.007 * motion;
+    const px = cinematic ? 0 : director.mouse.x * 0.045 * motion;
+    const py = cinematic ? 0 : director.mouse.y * 0.028 * motion;
+    const pushIn = cinematic ? 0 : Math.min(t2 * 0.006, 0.18) * motion;
 
-    const tx = c.x + px + director.impulse.x * 0.4;
-    const ty = c.y + py + breathY + director.impulse.y * 0.4;
+    const tx = c.x + px + director.impulse.x * (cinematic ? 0.2 : 0.4);
+    const ty = c.y + py + breathY + director.impulse.y * (cinematic ? 0.2 : 0.4);
     const tz = c.z - pushIn + breathZ;
 
     // depth of field as storytelling: ease toward the director's focus targets

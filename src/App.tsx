@@ -20,7 +20,7 @@ const ScrollScene = lazy(() =>
 );
 
 const gradientVariant = (stage: ReturnType<typeof useExperience.getState>["stage"]): GradientVariantKey => {
-  if (stage === "revealing" || stage === "revealed") return "reveal";
+  if (stage === "interior_reveal" || stage === "revealed") return "reveal";
   if (stage === "scroll") return "scroll";
   if (stage === "loading" || stage === "locked" || stage === "unlocking") return "lock";
   return "door";
@@ -41,7 +41,6 @@ export default function App() {
 
   useEffect(() => {
     if (stage === "unlocking") audio.startAmbient();
-    if (stage === "revealing") audio.revealSwell();
   }, [stage]);
 
   // allow body scroll only in the final chapter
@@ -69,7 +68,7 @@ export default function App() {
             fallback={
               <div className="screen door-fail">
                 <p>Something kept this door shut.</p>
-                <button onClick={() => setStage("revealing")} data-cursor>Enter anyway</button>
+                <button onClick={() => setStage("interior_reveal")} data-cursor>Enter anyway</button>
               </div>
             }
           >
@@ -82,7 +81,7 @@ export default function App() {
 
       {stage === "loading" && <LoadingScene />}
       {(stage === "locked" || stage === "unlocking") && <LockScreenScene />}
-      {(stage === "revealing" || stage === "revealed") && <RevealScene />}
+      {(stage === "interior_reveal" || stage === "revealed") && <RevealScene />}
 
       {isScroll && (
         <Suspense fallback={null}>

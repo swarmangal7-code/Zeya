@@ -72,7 +72,6 @@ export function RevealScene() {
     <div className="screen reveal-screen" ref={root} role="presentation">
       <div className="reveal-screen__scrim" />
       <div className="reveal-screen__glow" />
-      <div className="rev-tl" />
 
       <div className="reveal-screen__inner">
         <p className="rev-first" ref={first} aria-label={line1} />

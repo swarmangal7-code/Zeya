@@ -3,7 +3,7 @@ import { makeImpulseResponse } from "../lib/textures";
 import { quality } from "../lib/quality";
 import { useExperience } from "../state/useExperience";
 
-type SfxName = "knock1" | "knock2" | "door-open" | "unlock" | "error" | "click";
+type SfxName = "knock1" | "knock2" | "door-open" | "unlock" | "error" | "click" | "enter";
 
 interface SfxOptions {
   volume?: number;
@@ -213,6 +213,24 @@ class AudioManager {
       return buf;
     }
 
+    if (name === "enter") {
+      const { buf, d, s } = make(1.8);
+      let phase = 0;
+      let lp = 0;
+      let lpFreq = 400;
+      for (let i = 0; i < s; i++) {
+        const t = i / rate;
+        const f = 200 + 700 * (t / 1.8);
+        phase += (Math.PI * 2 * f) / rate;
+        const n = Math.random() * 2 - 1;
+        lpFreq = 400 + 600 * Math.min(1, t / 1.5);
+        lp += (n - lp) * Math.min(1, (2 * Math.PI * lpFreq) / rate);
+        const env = Math.min(1, t / 0.25) * Math.exp(-Math.max(0, t - 1.0) / 0.6) * 0.55;
+        d[i] = Math.max(-1, Math.min(1, lp * env + Math.sin(phase) * env * 0.2));
+      }
+      return buf;
+    }
+
     // click
     const { buf, d, s } = make(0.14);
     let phase = 0;
@@ -267,7 +285,7 @@ class AudioManager {
     // procedural synthesis happens once, here
     this.noisePool = this.synthNoise(8);
     this.ambientBed = this.renderAmbientBed();
-    for (const name of ["knock1", "knock2", "door-open", "unlock", "error", "click"] as const) {
+    for (const name of ["knock1", "knock2", "door-open", "unlock", "error", "click", "enter"] as const) {
       this.synthBuffers.set(name, this.renderSfx(name));
     }
 
@@ -387,6 +405,43 @@ class AudioManager {
   /** Tiny tick for PIN digits / buttons. */
   click(): void {
     this.playSfx("click", { volume: 0.35 });
+  }
+
+  /** Subtle cinematic riser as the user physically passes through the doorway. */
+  entryTransition(): void {
+    this.playSfx("enter", { volume: 0.48, reverb: quality.spatialAudio ? 0.25 : 0 });
+  }
+
+  private interiorSrc: AudioBufferSourceNode | null = null;
+  private interiorGain: GainNode | null = null;
+
+  /**
+   * A quieter, brighter version of the ambient bed that fades in once the
+   * camera has entered the interior — layered with the existing bed so
+   * the world quietly "opens up".
+   */
+  startInteriorAmbience(): void {
+    if (!this.ensure() || !this.ambientBed || this.interiorSrc) return;
+    const c = this.ctx!;
+    const t = c.currentTime;
+    this.interiorGain = c.createGain();
+    this.interiorGain.gain.setValueAtTime(0.0001, t);
+    this.interiorGain.gain.linearRampToValueAtTime(experienceConfig.audio.ambientVolume * 0.3, t + 2.8);
+    this.interiorGain.connect(this.ambBus!);
+
+    const lp = c.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = 520;
+    this.interiorGain.connect(lp);
+    lp.connect(this.master!);
+
+    const src = c.createBufferSource();
+    src.buffer = this.ambientBed;
+    src.playbackRate.value = 1.35;
+    src.loop = true;
+    src.connect(this.interiorGain);
+    src.start(t);
+    this.interiorSrc = src;
   }
 
   /* ------------------------------------------------------------------ */

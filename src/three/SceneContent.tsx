@@ -9,6 +9,7 @@ import { DoorModel } from "./DoorModel";
 import { CameraRig } from "./CameraRig";
 import { quality } from "../lib/quality";
 import { experienceConfig } from "../experience.config";
+import { makeGlowTexture } from "../lib/textures";
 
 export function SceneContent() {
   const scene = useThree((s) => s.scene);
@@ -16,6 +17,7 @@ export function SceneContent() {
   const cfg = experienceConfig.postprocessing;
   const dofRef = useRef<unknown>(null);
   const fog = useMemo(() => new THREE.Fog("#0A0F1C", 5.0, 13.0), []);
+  const glow = useMemo(() => makeGlowTexture("#D6E2F8", "#536FAF"), []);
 
   useEffect(() => {
     scene.fog = fog;
@@ -43,6 +45,26 @@ export function SceneContent() {
       </Environment>
 
       <DoorModel />
+
+      {/* the interior beyond the door — a quiet corridor with a bright end */}
+      <mesh position={[-2.05, 1.7, -8]} rotation-y={Math.PI / 2}>
+        <planeGeometry args={[13, 3.6]} />
+        <meshStandardMaterial color="#090D18" roughness={1} />
+      </mesh>
+      <mesh position={[2.05, 1.7, -8]} rotation-y={-Math.PI / 2}>
+        <planeGeometry args={[13, 3.6]} />
+        <meshStandardMaterial color="#090D18" roughness={1} />
+      </mesh>
+      <mesh position={[0, 3.6, -8]} rotation-x={Math.PI / 2}>
+        <planeGeometry args={[4.1, 13]} />
+        <meshStandardMaterial color="#0A0E1A" roughness={1} />
+      </mesh>
+      {/* the light waiting at the end of the corridor */}
+      <mesh position={[0, 2.2, -13.7]} scale={[3.2, 3.2, 1]} rotation={[0, 0, 0]}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial map={glow} transparent depthWrite={false} blending={THREE.AdditiveBlending} opacity={0.24} toneMapped={false} />
+      </mesh>
+      <pointLight position={[0, 2.4, -12.5]} intensity={14} distance={14} color="#C7D6F5" decay={2} />
 
       {/* the room */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>

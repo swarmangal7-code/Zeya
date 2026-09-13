@@ -103,7 +103,7 @@ export const experienceConfig = {
     sfxVolume: 0.85,
     fadeInMs: 2600,
     fadeOutMs: 900,
-    manifest: ["ambient", "knock1", "knock2", "door-open", "unlock", "error", "click"] as const,
+    manifest: ["ambient", "knock1", "knock2", "door-open", "unlock", "error", "click", "enter"] as const,
     spatialize: true,
     preDelayMs: 32,
   },
@@ -158,13 +158,14 @@ export const experienceConfig = {
     },
     door: {
       openCta: "Open the door",
+      stepInside: "Step inside",
       swipe: "Two hands. One push.",
     },
     reveal: {
       first: "Some doors are worth opening.",
       second: "Welcome.",
       sub: "make yourself at home",
-      continueLabel: "step inside",
+      continueLabel: "continue",
     },
     scroll: {
       running: "where doors open",

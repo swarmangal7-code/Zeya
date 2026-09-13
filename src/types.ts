@@ -7,8 +7,13 @@ export type Stage =
   | "knock_2"
   | "open_available"
   | "opening"
-  | "revealing"
+  | "door_open"
+  | "step_inside_available"
+  | "entering"
+  | "interior_reveal"
   | "revealed"
   | "scroll";
 
 export type Quality = "high" | "medium" | "low";
+
+export type CameraMode = "normal" | "door_opening" | "door_open" | "entering" | "interior";

@@ -36,15 +36,25 @@ export function DoorFallback() {
         .to(glow.current, { opacity: 1, duration: 2.8, ease: "power2.out" }, 0.4)
         .to(left.current, { rotateY: -60, duration: 4.4, ease: "power3.inOut" }, 0)
         .to(right.current, { rotateY: 60, duration: 4.4, ease: "power3.inOut" }, 0)
-        .to(frame.current, { opacity: 0, duration: 1.4 }, 3.4)
-        .to(floor.current, { opacity: 0.15, duration: 2.4 }, 1.2)
-        .call(() => setStage("revealing"), undefined, 2.1)
-        .call(() => setStage("revealed"), undefined, 3.6);
+        .to(floor.current, { opacity: 0.45, duration: 2.4 }, 1.2)
+        .call(() => setStage("door_open"), undefined, 2.2);
+    });
+
+    // walk-through approximation: the door slips past as the camera enters
+    const offEnter = onDoor("enter", () => {
+      const setStage = useExperience.getState().setStage;
+      gsap
+        .timeline()
+        .to(frame.current, { opacity: 0, x: 46, duration: 1.6, ease: "power2.in" }, 0)
+        .to(glow.current, { opacity: 0.55, duration: 1.4 }, 0.2)
+        .call(() => setStage("interior_reveal"), undefined, 1.1)
+        .call(() => setStage("revealed"), undefined, 2.0);
     });
 
     return () => {
       offKnock();
       offOpen();
+      offEnter();
     };
   }, []);
 

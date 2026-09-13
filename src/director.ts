@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import gsap from "gsap";
 import { experienceConfig } from "./experience.config";
+import { prefersReducedMotion } from "./lib/quality";
+import type { CameraMode } from "./types";
 
 /**
  * Non-reactive scene director. Holds refs to 3D objects and drives
@@ -184,15 +186,36 @@ class Director {
   }
 
   /* ------------------------------------------------------------------ */
+  /* Camera modes                                                        */
+  /* ------------------------------------------------------------------ */
+
+  cinematicMode: CameraMode = "normal";
+
+  /**
+   * The cinematic controller owns the camera while a scripted sequence runs.
+   * During "normal" CameraRig applies parallax/breathing/push-in; during any
+   * cinematic mode it only approaches the scripted camTarget/camLook.
+   */
+  setCameraMode(mode: CameraMode): void {
+    this.cinematicMode = mode;
+  }
+
+  /* ------------------------------------------------------------------ */
   /* Opening                                                            */
   /* ------------------------------------------------------------------ */
 
-  openDoor(onReveal?: () => void, onDone?: () => void): void {
+  /**
+   * The door swings around its true hinges while the camera stays at eye
+   * level — a shallow push forward, a gentle look into the interior, no
+   * downward dive. onDone fires when the door is FULLY open.
+   */
+  openDoor(onDone?: () => void): void {
     this.doorOpenInitiated = true;
+    this.setCameraMode("door_opening");
     const total = experienceConfig.timings.opening.total / 1000;
     const tl = gsap.timeline();
 
-    // door swings — slow, resisting at first, then opening
+    // door swings — slow, physical-feeling inertia
     if (this.doorLeft) {
       tl.to(this.doorLeft.rotation, { y: 1.92, duration: total, ease: "power2.inOut" }, 0);
     }
@@ -200,28 +223,27 @@ class Director {
       tl.to(this.doorRight.rotation, { y: -1.92, duration: total, ease: "power2.inOut" }, 0);
     }
 
-    // interior begins to give (T+0.7)
+    // interior at first stays almost black, then cool light gives way
     if (this.interiorGlow) {
       tl.fromTo(this.interiorGlow.material,
         { opacity: 0.16 },
-        { opacity: 0.9, duration: total * 0.42, ease: "power2.out" },
-        0.7,
+        { opacity: 0.55, duration: total * 0.5, ease: "power2.out" },
+        0.9,
       );
     }
-    // light spills (T+1.0)
     if (this.interiorLight) {
-      tl.fromTo(this.interiorLight, { intensity: 0 }, { intensity: 42, duration: total * 0.42, ease: "power2.out" }, 1.0);
+      tl.fromTo(this.interiorLight, { intensity: 0 }, { intensity: 26, duration: total * 0.5, ease: "power2.out" }, 1.1);
     }
 
-    // camera eases forward (T+1.2), field widens
-    tl.to(this.camTarget, { z: 1.9, duration: total * 0.85, ease: "power2.inOut" }, 1.2)
-      .to(this.camTarget, { y: 0.25, duration: total * 0.85, ease: "power1.inOut" }, 1.2)
-      .to(this, { fovTarget: 56, duration: total * 0.85, ease: "power2.inOut" }, 1.2)
-      .to(this.camLook, { y: 2.25, duration: total * 0.85, ease: "power1.inOut" }, 1.2);
+    // camera: remains near eye height, tiny forward push, threshold in view
+    tl.to(this.camTarget, { z: 2.7, x: 0, duration: total * 0.8, ease: "power2.inOut" }, 0.8)
+      .to(this.camTarget, { y: 1.0, duration: total * 0.8, ease: "power2.inOut" }, 0.8)
+      .to(this, { fovTarget: 46, duration: total * 0.8, ease: "power2.inOut" }, 0.8)
+      .to(this.camLook, { y: 1.95, z: -2.4, duration: total * 0.8, ease: "power2.inOut" }, 0.8);
 
-    // room brightens as the world on the other side arrives
+    // interior assumes the light as the frame settles
     if (this.keyLight) {
-      tl.fromTo(this.keyLight, { intensity: 0.3 }, { intensity: 2.1, duration: total * 0.45, ease: "power2.out" }, 1.0);
+      tl.fromTo(this.keyLight, { intensity: 0.5 }, { intensity: 1.05, duration: total * 0.4, ease: "power2.out" }, 1.0);
     }
     if (this.handleLight) {
       tl.to(this.handleLight, { intensity: 0, duration: 1.0 }, 0);
@@ -231,17 +253,88 @@ class Director {
     }
 
     const revealAt = experienceConfig.timings.opening.revealAt * total;
-    // focus drifts past the door toward the interior as the world is revealed
-    tl.to(this, { dofFocus: 0.3, dofBokeh: 1.5, duration: total * 0.5, ease: "power2.inOut" }, revealAt + 0.3);
-    tl.call(
-      () => {
-        this.doorOpenAmount = 1;
-        onReveal?.();
-      },
-      undefined,
-      revealAt,
-    );
-    tl.call(() => onDone?.(), undefined, total * 0.86);
+    // shallow DOF handoff: door → threshold
+    tl.to(this, { dofFocus: 0.24, dofBokeh: 1.35, duration: total * 0.5, ease: "power2.inOut" }, revealAt + 0.2);
+
+    tl.call(() => onDone?.(), undefined, total * 0.92);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* STEP INSIDE — physically walking through the doorway                */
+  /* ------------------------------------------------------------------ */
+
+  /**
+   * The camera lifts toward eye level, looks into the interior, then moves
+   * forward through the doorway. The door stays mounted; geometry simply
+   * leaves the frame as the camera passes.
+   *
+   * onEntered fires once the threshold has been crossed (interior in view),
+   * onSettled when the entering pose is complete.
+   */
+  enterDoor(onEntered?: () => void, onSettled?: () => void): void {
+    this.doorOpenInitiated = true;
+    this.setCameraMode("entering");
+    const tl = gsap.timeline();
+    const reduce = prefersReducedMotion;
+
+    if (reduce) {
+      gsap.set(this.camTarget, { y: 1.5, z: -5.2, x: 0 });
+      gsap.set(this.camLook, { y: 1.9, z: -9, x: 0 });
+      gsap.set(this, { fovTarget: 51 });
+      this.setCameraMode("interior");
+      this.tintInteriorLight(0.85);
+      if (this.keyLight) gsap.to(this.keyLight, { intensity: 0.4, duration: 1 });
+      onEntered?.();
+      onSettled?.();
+      return;
+    }
+
+    // ENTER 1 — lift
+    tl.to(this.camTarget, { y: 1.5, z: 0.5, duration: 0.9, ease: "power2.inOut" }, 0)
+      // ENTER 2 — look forward into the interior
+      .to(this.camLook, { y: 2.0, z: -6, duration: 0.9, ease: "power2.inOut" }, 0.15)
+      .to(this, { fovTarget: 49, duration: 1.2, ease: "power2.inOut" }, 0.2)
+      // ENTER 3 — forward, through the doorway
+      .to(this.camTarget, { y: 1.55, z: -5.4, duration: 1.3, ease: "power2.inOut" }, 0.75)
+      .to(this.camLook, { y: 1.9, z: -9, duration: 1.3, ease: "power2.inOut" }, 0.75)
+      .to(this, { dofFocus: 0.32, dofBokeh: 1.5, duration: 1.4, ease: "power2.inOut" }, 0.9)
+      .to(this, { fovTarget: 51, duration: 1.1, ease: "power2.inOut" }, 1.1);
+
+    // blue interior spill shifts toward cool white as we cross
+    tl.call(() => this.tintInteriorLight(0.7), undefined, 0.55);
+    tl.call(() => this.tintInteriorLight(1), undefined, 1.25);
+
+    // room key yields to the interior
+    if (this.keyLight) tl.to(this.keyLight, { intensity: 0.4, duration: 1.2 }, 0.6);
+
+    tl.call(() => {
+      this.setCameraMode("interior");
+      onEntered?.();
+    }, undefined, 0.85);
+    tl.call(() => onSettled?.(), undefined, 2.0);
+  }
+
+  /** Progression of the interior light toward cool white (0..1). */
+  tintInteriorLight(p: number): void {
+    if (!this.interiorLight) return;
+    const c = this.interiorLight.color;
+    // #8FA8E0 → #D6E2F8
+    gsap.to(c, { r: 0.84 + 0.13 * p, g: 0.66 + 0.16 * p, b: 0.88 + 0.11 * p, duration: 0.6, overwrite: true });
+  }
+
+  /**
+   * As the camera settles in front of the open doorway, the interior comes
+   * up to full brightness so the space reads clearly before STEP INSIDE.
+   */
+  liftDoorToInterior(): void {
+    if (this.interiorGlow) {
+      gsap.to((this.interiorGlow.material as THREE.MeshBasicMaterial), { opacity: 0.9, duration: 1.6, ease: "power2.out" });
+    }
+    if (this.interiorLight) {
+      gsap.to(this.interiorLight, { intensity: 40, duration: 2.0, ease: "power2.out" });
+      this.tintInteriorLight(0.5);
+    }
+    gsap.to(this, { fovTarget: 48, dofFocus: 0.3, dofBokeh: 1.45, duration: 1.8, ease: "power2.out" });
   }
 }
 
