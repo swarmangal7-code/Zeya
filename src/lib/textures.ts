@@ -220,8 +220,8 @@ function heightToColor(src: HTMLCanvasElement): THREE.CanvasTexture {
   const ctx = out.getContext("2d")!;
   const img = ctx.createImageData(w, h);
   const d = img.data;
-  const warmC = [0x6b, 0x49, 0x2c];
-  const deepC = [0x2e, 0x22, 0x16];
+  const warmC = [0x40, 0x3f, 0x4b];
+  const deepC = [0x1c, 0x1b, 0x24];
   for (let i = 0; i < d.length; i += 4) {
     const t = data[i] / 255;
     const n = (Math.random() - 0.5) * 9;
@@ -242,12 +242,12 @@ function heightToColor(src: HTMLCanvasElement): THREE.CanvasTexture {
  * Returns a cached set of coherent maps painted from one height field,
  * so veins line up across color/normal/roughness.
  */
-export function makeWoodMaps(seed = "walnut"): WoodMaps {
+export function makeWoodMaps(seed = "graphite-oak"): WoodMaps {
   const cached = woodCache.get(seed);
   if (cached) return cached;
 
   const height = document.createElement("canvas");
-  height.width = height.height = 512;
+  height.width = height.height = 1024;
   drawWoodHeight(height);
 
   const maps: WoodMaps = {

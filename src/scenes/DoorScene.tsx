@@ -134,7 +134,7 @@ function DoorWorld() {
         toneMappingExposure: 1.16,
       }}
       onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
-      camera={{ fov: 40, position: [0, 0.55, 7.5], near: 0.1, far: 40 }}
+      camera={{ fov: experienceConfig.camera.fov, position: [0, experienceConfig.camera.eyeHeight, 9.2], near: 0.1, far: 40 }}
     >
       <SceneContent />
     </Canvas>

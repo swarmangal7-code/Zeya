@@ -26,16 +26,26 @@ export const experienceConfig = {
   },
 
   /* ------------------------------------------------------------------ */
-  /* Camera / door composition                                          */
+  /* Camera — geometry-aware composition                                */
   /* ------------------------------------------------------------------ */
   camera: {
-    /** half-width / half-height of the door+frame, in world units, that
-      the camera must keep fully visible. Drives responsive framing. */
-    fitHalfW: 2.12,
-    fitHalfV: 2.62,
-    fov: 40,
-    idleY: 0.55,
-    lookY: 2.15,
+    /** world-units the camera keeps visible around the door */
+    fitHalfW: 2.7,
+    fitHalfV: 3.5, // ≈ door height / 0.6 → door fills ~60% of viewport height
+    fov: 42,
+    /** standing eye height in front of the door */
+    eyeHeight: 1.5,
+    /** where the eye rests on the door (slightly above mid-leaf) */
+    lookY: 2.05,
+    /** scripted poses, derived from the door/threshold/interior anchors */
+    poses: {
+      front: { z: 0, y: 1.5, lookY: 2.05, fov: 42 },        // z from fit-math
+      opening: { z: 7.1, y: 1.5, lookY: 1.95, fov: 45 },     // tiny push, no dive
+      doorOpen: { z: 6.2, y: 1.5, lookY: 1.95, fov: 46 },
+      lift: { y: 1.62 },
+      threshold: { z: 0.4, y: 1.62, lookZ: -4.6, lookY: 1.95 },
+      interior: { z: -5.2, y: 1.68, lookZ: -9.5, lookY: 1.92, fov: 51 },
+    },
   },
 
   door: {
@@ -59,13 +69,12 @@ export const experienceConfig = {
   /* ------------------------------------------------------------------ */
   postprocessing: {
     enabled: true,
-    /** bloom only catches the reveal light + strongest highlights — never the door */
-    bloom: { intensity: 0.3, luminanceThreshold: 1.7, luminanceSmoothing: 0.15, radius: 0.6 },
-    dof: { focusDistance: 0.2, focalLength: 0.05, bokehScale: 1.2 },
-    /** kept barely perceptible — cinematic image, not an effect reel */
-    chromaticAberration: 0.0001,
-    noise: 0.01,
-    vignette: 0.48,
+    /** barely-there enhancement; quality comes from geometry, light & shadow */
+    bloom: { intensity: 0.2, luminanceThreshold: 2.0, luminanceSmoothing: 0.15, radius: 0.6 },
+    dof: { focusDistance: 0.2, focalLength: 0.055, bokehScale: 1.2 },
+    chromaticAberration: 0.00006,
+    noise: 0.006,
+    vignette: 0.42,
   },
 
   /* ------------------------------------------------------------------ */

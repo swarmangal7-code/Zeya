@@ -6,12 +6,10 @@ export interface QualitySettings {
   dpr: [number, number];
   shadows: boolean;
   shadowMapSize: number;
-  dustCount: number;
   grain: boolean;
   contactShadows: boolean;
   spatialAudio: boolean;
-  maxParticleRatio: number;
-  /** full EffectComposer (bloom/DoF/CA/noise/vignette) — high tier only */
+  /** full EffectComposer (bloom/DOF/CA/noise/vignette) — high tier only */
   postprocess: boolean;
 }
 
@@ -41,36 +39,30 @@ export function getQuality(): QualitySettings {
   const maps: Record<Quality, Omit<QualitySettings, "postprocess">> = {
     high: {
       tier,
-      dpr: [1, 1.6],
+      dpr: [1, 2],
       shadows: true,
-      shadowMapSize: 1024,
-      dustCount: 220,
+      shadowMapSize: 2048,
       grain: !postprocess,
       contactShadows: true,
       spatialAudio: true,
-      maxParticleRatio: 1,
     },
     medium: {
       tier,
-      dpr: [1, 1.25],
+      dpr: [1, 1.5],
       shadows: true,
-      shadowMapSize: 512,
-      dustCount: 110,
+      shadowMapSize: 1024,
       grain: true,
       contactShadows: true,
       spatialAudio: false,
-      maxParticleRatio: 0.6,
     },
     low: {
       tier,
       dpr: [1, 1],
       shadows: false,
       shadowMapSize: 0,
-      dustCount: 40,
       grain: false,
       contactShadows: false,
       spatialAudio: false,
-      maxParticleRatio: 0.35,
     },
   };
   return { ...maps[tier], postprocess };

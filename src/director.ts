@@ -15,12 +15,12 @@ class Director {
   /** base position the camera lerps toward every frame */
   camTarget = {
     x: 0,
-    y: experienceConfig.camera.idleY,
-    z: 6.8,
+    y: experienceConfig.camera.eyeHeight,
+    z: experienceConfig.camera.poses.front.z + 9,
   };
   camLook = { x: 0, y: experienceConfig.camera.lookY, z: 0 };
   /** distance that frames the door fully for the current viewport */
-  fitZ = 6.8;
+  fitZ = 9.2;
   doorOpenInitiated = false;
   impulse = { x: 0, y: 0 };
   fovTarget = experienceConfig.camera.fov;
@@ -29,14 +29,13 @@ class Director {
   doorLeft: THREE.Group | null = null;
   doorRight: THREE.Group | null = null;
   frameGroup: THREE.Group | null = null;
-  dust: THREE.Points | null = null;
+
   interiorGlow: THREE.Mesh | null = null;
   interiorLight: THREE.PointLight | null = null;
   keyLight: THREE.DirectionalLight | null = null;
   revealFog: THREE.Fog | null = null;
   handleLight: THREE.PointLight | null = null;
 
-  doorOpenAmount = 0;
   /** DepthOfField storytelling targets (lerped by CameraRig) */
   dofFocus = experienceConfig.postprocessing.dof.focusDistance;
   dofBokeh = experienceConfig.postprocessing.dof.bokehScale;
@@ -60,7 +59,7 @@ class Director {
     doorLeft?: THREE.Group | null;
     doorRight?: THREE.Group | null;
     frameGroup?: THREE.Group | null;
-    dust?: THREE.Points | null;
+
     interiorGlow?: THREE.Mesh | null;
     interiorLight?: THREE.PointLight | null;
     keyLight?: THREE.DirectionalLight | null;
@@ -75,7 +74,7 @@ class Director {
     if (refs.doorLeft) this.doorLeft = refs.doorLeft;
     if (refs.doorRight) this.doorRight = refs.doorRight;
     if (refs.frameGroup) this.frameGroup = refs.frameGroup;
-    if (refs.dust) this.dust = refs.dust;
+
     if (refs.interiorGlow) this.interiorGlow = refs.interiorGlow;
     if (refs.interiorLight) this.interiorLight = refs.interiorLight;
     if (refs.keyLight) this.keyLight = refs.keyLight;
@@ -93,7 +92,7 @@ class Director {
   }
 
   setStartDoor(): void {
-    gsap.set(this.camTarget, { x: 0, y: experienceConfig.camera.idleY, z: this.fitZ });
+    gsap.set(this.camTarget, { x: 0, y: experienceConfig.camera.eyeHeight, z: this.fitZ });
     gsap.set(this.camLook, { x: 0, y: experienceConfig.camera.lookY, z: 0 });
     this.fovTarget = experienceConfig.camera.fov;
     this.doorOpenInitiated = false;
@@ -172,10 +171,7 @@ class Director {
       });
     }
 
-    // dust startled subtly
-    if (this.dust) {
-      gsap.fromTo(this.dust.position, { x: 0 }, { x: 0.03 * s, duration: 0.12, yoyo: true, repeat: 1, onComplete: () => gsap.to(this.dust!.position, { x: 0, duration: 0.6 }) });
-    }
+
   }
 
   /** Catch the decaying camera impulse each frame. */
@@ -235,11 +231,15 @@ class Director {
       tl.fromTo(this.interiorLight, { intensity: 0 }, { intensity: 26, duration: total * 0.5, ease: "power2.out" }, 1.1);
     }
 
-    // camera: remains near eye height, tiny forward push, threshold in view
-    tl.to(this.camTarget, { z: 2.7, x: 0, duration: total * 0.8, ease: "power2.inOut" }, 0.8)
-      .to(this.camTarget, { y: 1.0, duration: total * 0.8, ease: "power2.inOut" }, 0.8)
-      .to(this, { fovTarget: 46, duration: total * 0.8, ease: "power2.inOut" }, 0.8)
-      .to(this.camLook, { y: 1.95, z: -2.4, duration: total * 0.8, ease: "power2.inOut" }, 0.8);
+    // camera: stays at eye level, only a shallow forward push into doorway view
+    const p1 = experienceConfig.camera.poses.opening;
+    const p2 = experienceConfig.camera.poses.doorOpen;
+    tl.to(this.camTarget, { z: p1.z, x: 0, duration: total * 0.7, ease: "power2.inOut" }, 0.7)
+      .to(this.camTarget, { y: p1.y, duration: total * 0.7, ease: "power2.inOut" }, 0.7)
+      .to(this, { fovTarget: p1.fov, duration: total * 0.7, ease: "power2.inOut" }, 0.7)
+      .to(this.camLook, { y: p1.lookY, z: -2.4, duration: total * 0.7, ease: "power2.inOut" }, 0.7)
+      .to(this.camTarget, { z: p2.z, duration: total * 0.25, ease: "power2.inOut" }, total * 0.55)
+      .to(this, { fovTarget: p2.fov, duration: total * 0.25, ease: "power2.inOut" }, total * 0.55);
 
     // interior assumes the light as the frame settles
     if (this.keyLight) {
@@ -275,12 +275,14 @@ class Director {
     this.doorOpenInitiated = true;
     this.setCameraMode("entering");
     const tl = gsap.timeline();
-    const reduce = prefersReducedMotion;
+    const reduced = prefersReducedMotion;
+    const thr = experienceConfig.camera.poses.threshold;
+    const int = experienceConfig.camera.poses.interior;
 
-    if (reduce) {
-      gsap.set(this.camTarget, { y: 1.5, z: -5.2, x: 0 });
-      gsap.set(this.camLook, { y: 1.9, z: -9, x: 0 });
-      gsap.set(this, { fovTarget: 51 });
+    if (reduced) {
+      gsap.set(this.camTarget, { y: int.y, z: int.z, x: 0 });
+      gsap.set(this.camLook, { y: int.lookY, z: int.lookZ, x: 0 });
+      gsap.set(this, { fovTarget: int.fov });
       this.setCameraMode("interior");
       this.tintInteriorLight(0.85);
       if (this.keyLight) gsap.to(this.keyLight, { intensity: 0.4, duration: 1 });
@@ -289,16 +291,16 @@ class Director {
       return;
     }
 
-    // ENTER 1 — lift
-    tl.to(this.camTarget, { y: 1.5, z: 0.5, duration: 0.9, ease: "power2.inOut" }, 0)
-      // ENTER 2 — look forward into the interior
-      .to(this.camLook, { y: 2.0, z: -6, duration: 0.9, ease: "power2.inOut" }, 0.15)
-      .to(this, { fovTarget: 49, duration: 1.2, ease: "power2.inOut" }, 0.2)
-      // ENTER 3 — forward, through the doorway
-      .to(this.camTarget, { y: 1.55, z: -5.4, duration: 1.3, ease: "power2.inOut" }, 0.75)
-      .to(this.camLook, { y: 1.9, z: -9, duration: 1.3, ease: "power2.inOut" }, 0.75)
+    // ENTER 1 — lift, only
+    tl.to(this.camTarget, { y: thr.y, z: 0.6, duration: 0.9, ease: "power2.inOut" }, 0)
+      // ENTER 2 — look forward through the doorway
+      .to(this.camLook, { y: thr.lookY, z: thr.lookZ, duration: 0.95, ease: "power2.inOut" }, 0.2)
+      .to(this, { fovTarget: 47, duration: 1.1, ease: "power2.inOut" }, 0.25)
+      // ENTER 3 — forward, crossing the threshold
+      .to(this.camTarget, { y: int.y, z: int.z, duration: 1.35, ease: "power2.inOut" }, 0.75)
+      .to(this.camLook, { y: int.lookY, z: int.lookZ, duration: 1.35, ease: "power2.inOut" }, 0.75)
       .to(this, { dofFocus: 0.32, dofBokeh: 1.5, duration: 1.4, ease: "power2.inOut" }, 0.9)
-      .to(this, { fovTarget: 51, duration: 1.1, ease: "power2.inOut" }, 1.1);
+      .to(this, { fovTarget: int.fov, duration: 1.1, ease: "power2.inOut" }, 1.15);
 
     // blue interior spill shifts toward cool white as we cross
     tl.call(() => this.tintInteriorLight(0.7), undefined, 0.55);
