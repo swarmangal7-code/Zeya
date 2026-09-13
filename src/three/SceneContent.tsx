@@ -25,12 +25,15 @@ export function SceneContent() {
 
   const world = (
     <>
-      <ambientLight intensity={0.24} color="#4C5C80" />
+      <ambientLight intensity={0.16} color="#4C5C80" />
+
+      {/* soft overhead wash — architectural, even, barely there */}
+      <directionalLight position={[0, 7.5, 1.5]} intensity={0.35} color="#CFD8F0" />
 
       {/* procedural cool environment lighting for PBR reflections */}
       <Environment resolution={64} frames={1}>
         <Lightformer form="rect" position={[0, 6, -4]} scale={[9, 4, 1]} intensity={1.0} color="#7E93C4" />
-        <Lightformer form="rect" position={[-6, 2, 3]} rotation-y={Math.PI / 2} scale={[2, 6, 1]} intensity={0.42} color="#3E4F86" />
+        <Lightformer form="rect" position={[-6, 2, 3]} rotation-y={Math.PI / 2} scale={[2, 6, 1]} intensity={0.4} color="#3E4F86" />
         <Lightformer form="rect" position={[6, 2, 3]} rotation-y={-Math.PI / 2} scale={[2, 6, 1]} intensity={0.5} color="#9FB0D9" />
         <Lightformer form="rect" position={[0, -2, 7]} scale={[10, 2, 1]} intensity={0.2} color="#5670B8" />
         <Lightformer form="rect" position={[-8, 3, -2]} rotation-y={Math.PI / 2} scale={[2, 8, 1]} intensity={0.3} color="#C9D4F2" />
@@ -41,7 +44,7 @@ export function SceneContent() {
       {/* the room */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[30, 30]} />
-        <meshStandardMaterial color="#0D111C" roughness={0.84} metalness={0.15} envMapIntensity={0.45} />
+        <meshStandardMaterial color="#0D111C" roughness={0.55} metalness={0.18} envMapIntensity={0.7} />
       </mesh>
       <mesh position={[0, 3, -18]} receiveShadow>
         <planeGeometry args={[30, 8]} />
@@ -56,10 +59,14 @@ export function SceneContent() {
         <meshStandardMaterial color="#0A0D17" roughness={1} />
       </mesh>
 
+      {/* faint cool fill from the left — keeps the shadow side from going dead */}
+      <directionalLight position={[-4.5, 1.6, 5]} intensity={0.14} color="#8FA2C8" />
       {/* cool key from front-right — gives the door form, not a flat slab */}
-      <directionalLight position={[3.6, 5.2, 4.2]} intensity={0.6} color="#A9BBDD" />
+      <directionalLight position={[3.6, 5.2, 4.2]} intensity={0.62} color="#A9BBDD" />
+      {/* strong narrow rim from behind/right — separates the door from the dark */}
+      <directionalLight position={[4, 3, -5]} intensity={1.7} color="#6F88C8" />
       {/* cool rim from behind the door, separating it from the dark */}
-      <directionalLight position={[0, 3, -6]} intensity={1.3} color="#6F88C8" />
+      <directionalLight position={[0, 3, -6]} intensity={0.5} color="#4C5C80" />
 
       {quality.contactShadows && (
         <ContactShadows position={[0, 0.005, 0]} opacity={0.6} scale={13} blur={2.6} far={3.2} resolution={256} color="#000000" />

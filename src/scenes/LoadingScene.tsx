@@ -19,9 +19,12 @@ export function LoadingScene() {
   const min = experienceConfig.timings.loading.minDuration;
 
   useEffect(() => {
-    audio.warm(experienceConfig.audio.manifest).catch(() => {});
+    const warmP = audio.warm(experienceConfig.audio.manifest).catch(() => {});
     const progress = { v: 0 };
     const dur = prefersReducedMotion ? Math.min(min, 1200) : min;
+    const fadeOut = () => {
+      gsap.to(root.current, { opacity: 0, filter: "blur(10px)", duration: 1.1, ease: "power2.inOut", onComplete: () => setStage("locked") });
+    };
     const tl = gsap.timeline();
     tl.fromTo(content.current, { opacity: 0, y: 14, filter: "blur(6px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2, ease: "power2.out" })
       .to(progress, {
@@ -35,7 +38,9 @@ export function LoadingScene() {
           if (label.current && label.current.textContent !== step) label.current.textContent = step;
         },
         onComplete: () => {
-          gsap.to(root.current, { opacity: 0, filter: "blur(10px)", duration: 1.1, ease: "power2.inOut", onComplete: () => setStage("locked") });
+          // hand over only once audio is decoded and the minimum wait has passed
+          const cap = new Promise<never>((res) => window.setTimeout(res, 2000));
+          Promise.race([warmP, cap]).then(fadeOut);
         },
       }, 0.9);
     return () => {

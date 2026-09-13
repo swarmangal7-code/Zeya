@@ -17,7 +17,11 @@ if (import.meta.env.DEV) {
     ctxState: () => (audio as unknown as { ctx: AudioContext | null }).ctx?.state ?? "none",
     lastError: () => (audio as unknown as { lastError: string | null }).lastError,
     ambientStarted: () => (audio as unknown as { started: boolean }).started,
-    buffers: () => (audio as unknown as { buffers: Map<string, AudioBuffer> }).buffers.size,
+    warmed: () => (audio as unknown as { warmed: boolean }).warmed,
+    buffers: () =>
+      (audio as unknown as { fileBuffers: Map<string, AudioBuffer> }).fileBuffers.size,
+    synthBuffers: () =>
+      (audio as unknown as { synthBuffers: Map<string, AudioBuffer> }).synthBuffers.size,
     unlock: () => audio.unlock(),
   };
 }

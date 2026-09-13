@@ -16,20 +16,22 @@ function WoodMaterial({ base, repeatX }: { base: string; repeatX: number }) {
     const m = new THREE.MeshPhysicalMaterial();
     m.map = maps.color.clone();
     m.normalMap = maps.normal.clone();
-    m.normalScale = new THREE.Vector2(0.85, 0.85);
+    m.normalScale = new THREE.Vector2(0.9, 0.9);
     m.roughnessMap = maps.rough.clone();
-    m.map.repeat.set(repeatX, 1);
-    m.normalMap.repeat.set(repeatX, 1);
-    m.roughnessMap.repeat.set(repeatX, 1);
-    m.map.needsUpdate = true;
-    m.normalMap.needsUpdate = true;
-    m.roughnessMap.needsUpdate = true;
+    m.aoMap = maps.ao.clone();
+    m.aoMapIntensity = 0.85;
+    // uv2 is set globally on every door mesh once geometry is attached
+    for (const t of [m.map, m.normalMap, m.roughnessMap, m.aoMap]) {
+      t.repeat.set(repeatX, 1);
+      t.anisotropy = 4;
+      t.needsUpdate = true;
+    }
     m.color = new THREE.Color(base);
-    m.roughness = 0.48;
+    m.roughness = 0.46;
     m.metalness = 0.02;
     m.clearcoat = 1.0;
-    m.clearcoatRoughness = 0.3;
-    m.envMapIntensity = 1.15;
+    m.clearcoatRoughness = 0.28;
+    m.envMapIntensity = 1.2;
     return m;
   }, [base, repeatX]);
   return <primitive object={mat} attach="material" />;
@@ -109,19 +111,32 @@ function DoorLeaf({ side }: { side: "left" | "right" }) {
           </mesh>
         ))}
 
-        {/* brass handle, near inner edge */}
-        <group position={[side === "left" ? w - 0.18 : -(w - 0.18), 1.32, TH * 0.55]}>
-          <mesh>
-            <cylinderGeometry args={[0.02, 0.02, 0.16, 12]} />
+        {/* brass lever handle, near inner edge — plate, rose, lever, catch-light */}
+        <group position={[side === "left" ? w - 0.16 : -(w - 0.16), 1.34, TH * 0.5]}>
+          {/* escutcheon plate */}
+          <mesh rotation={[0, 0, side === "left" ? Math.PI / 2 : -Math.PI / 2]} position={[0, 0, 0.01]}>
+            <boxGeometry args={[0.1, 0.2, 0.02]} />
+            <meshStandardMaterial {...BRASS} roughness={0.32} />
+          </mesh>
+          {/* rose */}
+          <mesh position={[0, 0, 0.03]}>
+            <cylinderGeometry args={[0.036, 0.033, 0.03, 20]} />
             <meshStandardMaterial {...BRASS} />
           </mesh>
-          <mesh position={[side === "left" ? -0.17 : 0.17, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.012, 0.012, 0.32, 10]} />
-            <meshStandardMaterial {...BRASS} />
+          {/* stem */}
+          <mesh position={[0, 0, 0.075]}>
+            <cylinderGeometry args={[0.009, 0.009, 0.06, 10]} />
+            <meshStandardMaterial {...BRASS} roughness={0.22} />
           </mesh>
-          <mesh position={[0, 0, -0.02]}>
-            <cylinderGeometry args={[0.052, 0.05, 0.036, 24]} />
-            <meshStandardMaterial {...BRASS} />
+          {/* lever */}
+          <mesh position={[side === "left" ? -0.09 : 0.09, -0.02, 0.1]} rotation={[0, 0, side === "left" ? Math.PI / 2 : -Math.PI / 2]}>
+            <cylinderGeometry args={[0.009, 0.009, 0.2, 10]} />
+            <meshStandardMaterial {...BRASS} roughness={0.22} />
+          </mesh>
+          {/* lever tip */}
+          <mesh position={[side === "left" ? -0.185 : 0.185, -0.028, 0.102]} rotation={[Math.PI / 2, 0, 0]}>
+            <sphereGeometry args={[0.011, 10, 10]} />
+            <meshStandardMaterial {...BRASS} roughness={0.18} />
           </mesh>
         </group>
 
@@ -184,9 +199,16 @@ export function DoorAssembly() {
       keyLight: keyLight.current,
       handleLight: handleLight.current,
     });
-    if (quality.shadows && frame.current) {
+    if (frame.current) {
       frame.current.traverse((o) => {
-        if ((o as THREE.Mesh).isMesh) (o as THREE.Mesh).castShadow = true;
+        const m = o as THREE.Mesh;
+        if (m.isMesh) {
+          if (quality.shadows) m.castShadow = true;
+          const geo = m.geometry as THREE.BufferGeometry | undefined;
+          if (geo && !geo.getAttribute("uv2") && geo.getAttribute("uv")) {
+            geo.setAttribute("uv2", geo.getAttribute("uv"));
+          }
+        }
       });
     }
   };
@@ -221,6 +243,24 @@ export function DoorAssembly() {
         <group ref={right} position={[LW, 0, 0]}>
           <DoorLeaf side="right" />
         </group>
+
+        {/* architectural reveal — recessed jambs make the door read as installed */}
+        <mesh position={[-LW + 0.02, H / 2 - 0.1, -0.32]}>
+          <boxGeometry args={[0.1, H + 0.1, 0.5]} />
+          <meshStandardMaterial color="#0B0E17" roughness={0.9} metalness={0.05} />
+        </mesh>
+        <mesh position={[LW - 0.02, H / 2 - 0.1, -0.32]}>
+          <boxGeometry args={[0.1, H + 0.1, 0.5]} />
+          <meshStandardMaterial color="#0B0E17" roughness={0.9} metalness={0.05} />
+        </mesh>
+        <mesh position={[0, H - 0.12, -0.3]}>
+          <boxGeometry args={[W - 0.1, 0.1, 0.52]} />
+          <meshStandardMaterial color="#0A0D16" roughness={0.95} metalness={0.02} />
+        </mesh>
+        <mesh position={[0, 0.06, -0.32]}>
+          <boxGeometry args={[W + 0.6, 0.12, 0.5]} />
+          <meshStandardMaterial color="#141A2B" roughness={0.85} metalness={0.1} />
+        </mesh>
       </group>
 
       {/* interior warm glow, visible as the doors part */}

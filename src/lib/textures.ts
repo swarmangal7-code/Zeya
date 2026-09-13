@@ -184,9 +184,31 @@ export interface WoodMaps {
   color: THREE.CanvasTexture;
   normal: THREE.CanvasTexture;
   rough: THREE.CanvasTexture;
+  ao: THREE.CanvasTexture;
 }
 
 const woodCache = new Map<string, WoodMaps>();
+
+function heightToAO(src: HTMLCanvasElement): THREE.CanvasTexture {
+  const w = src.width;
+  const h = src.height;
+  const data = src.getContext("2d")!.getImageData(0, 0, w, h).data;
+  const out = document.createElement("canvas");
+  out.width = w;
+  out.height = h;
+  const ctx = out.getContext("2d")!;
+  const img = ctx.createImageData(w, h);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const v = Math.max(0, Math.min(255, 0.45 + (data[i] / 255) * 0.5));
+    d[i] = d[i + 1] = d[i + 2] = v * 255;
+    d[i + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  const tex = new THREE.CanvasTexture(out);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  return tex;
+}
 
 function heightToColor(src: HTMLCanvasElement): THREE.CanvasTexture {
   const w = src.width;
@@ -232,6 +254,7 @@ export function makeWoodMaps(seed = "walnut"): WoodMaps {
     color: heightToColor(height),
     normal: heightToNormal(height),
     rough: heightToGrayscale(height),
+    ao: heightToAO(height),
   };
   woodCache.set(seed, maps);
   return maps;
